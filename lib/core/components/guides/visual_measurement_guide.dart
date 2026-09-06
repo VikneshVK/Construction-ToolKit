@@ -631,18 +631,20 @@ class _DynamicGuidePainter extends CustomPainter {
       isActive: isDiaActive,
       pulseFactor: pulseFactor,
       labelOffset: const Offset(0, -12),
+      canvasSize: size,
     );
 
     // Height Dimension Line
     final hVal = values['height'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(topCenter.dx + radiusX + 20, topCenter.dy),
-      end: Offset(bottomCenter.dx + radiusX + 20, bottomCenter.dy),
+      start: Offset(topCenter.dx + radiusX + 18, topCenter.dy),
+      end: Offset(bottomCenter.dx + radiusX + 18, bottomCenter.dy),
       label: hVal.isNotEmpty ? 'Height: $hVal' : 'HEIGHT',
       isActive: isHeightActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(30, 0),
+      labelOffset: const Offset(14, 0),
+      canvasSize: size,
     );
   }
 
@@ -654,8 +656,8 @@ class _DynamicGuidePainter extends CustomPainter {
     // Positioned with clear top and bottom margins inside the 175px canvas
     final start = Offset(size.width * 0.14, size.height * 0.74);
     final numSteps = 4;
-    final stepW = 40.0;
-    final stepH = 21.0;
+    final stepW = 38.0;
+    final stepH = 20.0;
 
     final stairPath = Path()..moveTo(start.dx, start.dy);
     double curX = start.dx;
@@ -668,7 +670,7 @@ class _DynamicGuidePainter extends CustomPainter {
       stairPath.lineTo(curX, curY); // Rise
     }
     // Top landing
-    stairPath.lineTo(curX + 24, curY);
+    stairPath.lineTo(curX + 20, curY);
 
     // Stair Outline & Glow
     final stairPaint = Paint()
@@ -681,12 +683,13 @@ class _DynamicGuidePainter extends CustomPainter {
     final riseVal = values['rise'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(curX + 34, start.dy),
-      end: Offset(curX + 34, curY),
+      start: Offset(curX + 24, start.dy),
+      end: Offset(curX + 24, curY),
       label: riseVal.isNotEmpty ? 'Rise: $riseVal' : 'TOTAL RISE (HEIGHT)',
       isActive: isRiseActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(30, 0),
+      labelOffset: const Offset(12, 0),
+      canvasSize: size,
     );
 
     // Single Tread Depth Dimension Line (Top Step)
@@ -701,6 +704,7 @@ class _DynamicGuidePainter extends CustomPainter {
       isActive: isTreadActive,
       pulseFactor: pulseFactor,
       labelOffset: const Offset(0, -12),
+      canvasSize: size,
     );
 
     // Total Run Dimension Line (Bottom Base - fully inside canvas bounds)
@@ -713,6 +717,7 @@ class _DynamicGuidePainter extends CustomPainter {
       isActive: isRunActive,
       pulseFactor: pulseFactor,
       labelOffset: const Offset(0, 12),
+      canvasSize: size,
     );
   }
 
@@ -794,53 +799,79 @@ class _DynamicGuidePainter extends CustomPainter {
     final isLenActive = activeDimension.toLowerCase() == 'walllength' || activeDimension.toLowerCase() == 'length';
     final isHeightActive = activeDimension.toLowerCase() == 'wallheight' || activeDimension.toLowerCase() == 'height';
 
-    final left = size.width * 0.16;
-    final right = size.width * 0.84;
-    final top = size.height * 0.22;
-    final bottom = size.height * 0.78;
+    // Position wall comfortably with safe right margin for the height dimension line
+    final wallW = math.min(size.width * 0.54, 210.0);
+    final wallLeft = math.max(28.0, (size.width - wallW - 56.0) * 0.40);
+    final wallRight = wallLeft + wallW;
+    final wallTop = size.height * 0.26;
+    final wallBottom = size.height * 0.80;
 
-    // Wall Outline Grid
-    final wallRect = Rect.fromLTRB(left, top, right, bottom);
-    final wallFill = Paint()..color = const Color(0xFF1E293B)..style = PaintingStyle.fill;
-    final wallStroke = Paint()..color = const Color(0xFF475569)..strokeWidth = 1.0..style = PaintingStyle.stroke;
+    // Wall courses in staggered Running Bond (CMU / Brick pattern)
+    const rows = 4;
+    const cols = 5;
+    final rowH = (wallBottom - wallTop) / rows;
+    final colW = wallW / cols;
+
+    final wallRect = Rect.fromLTRB(wallLeft, wallTop, wallRight, wallBottom);
+    final wallFill = Paint()..color = const Color(0xFF1E293B).withValues(alpha: 0.65)..style = PaintingStyle.fill;
+    final wallStroke = Paint()..color = const Color(0xFF475569)..strokeWidth = 1.2..style = PaintingStyle.stroke;
+    final mortarPaint = Paint()..color = const Color(0xFF334155)..strokeWidth = 1.0..style = PaintingStyle.stroke;
+
     canvas.drawRect(wallRect, wallFill);
 
-    // Draw grid courses
-    const rows = 3;
-    const cols = 6;
-    final rowH = (bottom - top) / rows;
-    final colW = (right - left) / cols;
-
+    // Horizontal course lines
     for (int r = 1; r < rows; r++) {
-      canvas.drawLine(Offset(left, top + r * rowH), Offset(right, top + r * rowH), wallStroke);
+      final y = wallTop + r * rowH;
+      canvas.drawLine(Offset(wallLeft, y), Offset(wallRight, y), mortarPaint);
     }
-    for (int c = 1; c < cols; c++) {
-      canvas.drawLine(Offset(left + c * colW, top), Offset(left + c * colW, bottom), wallStroke);
+
+    // Vertical head joints in running bond (staggered alternating rows)
+    for (int r = 0; r < rows; r++) {
+      final y1 = wallTop + r * rowH;
+      final y2 = y1 + rowH;
+      final isStaggered = (r % 2 == 1);
+      final offset = isStaggered ? colW * 0.5 : 0.0;
+
+      double x = wallLeft + offset;
+      if (isStaggered && x > wallLeft + 2) {
+        canvas.drawLine(Offset(x, y1), Offset(x, y2), mortarPaint);
+      }
+      while (x + colW < wallRight - 2) {
+        x += colW;
+        canvas.drawLine(Offset(x, y1), Offset(x, y2), mortarPaint);
+      }
     }
+
+    // Outer wall outline
     canvas.drawRect(wallRect, wallStroke);
 
     // Wall Length Line (Top)
     final lVal = values['wallLength'] ?? values['length'] ?? '';
+    final lLabel = lVal.isNotEmpty ? 'Length: $lVal' : 'WALL LENGTH';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(left, top - 16),
-      end: Offset(right, top - 16),
-      label: lVal.isNotEmpty ? 'Length: $lVal' : 'WALL LENGTH',
+      start: Offset(wallLeft, wallTop - 18),
+      end: Offset(wallRight, wallTop - 18),
+      label: lLabel,
       isActive: isLenActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, -14),
+      labelOffset: const Offset(0, -12),
+      canvasSize: size,
     );
 
-    // Wall Height Line (Right)
+    // Wall Height Line (Right side with comfortable clearance inside canvas)
     final hVal = values['wallHeight'] ?? values['height'] ?? '';
+    final hLabel = hVal.isNotEmpty ? 'Height: $hVal' : 'WALL HEIGHT';
+    final dimRightX = wallRight + 20.0;
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(right + 22, top),
-      end: Offset(right + 22, bottom),
-      label: hVal.isNotEmpty ? 'Height: $hVal' : 'WALL HEIGHT',
+      start: Offset(dimRightX, wallTop),
+      end: Offset(dimRightX, wallBottom),
+      label: hLabel,
       isActive: isHeightActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(32, 0),
+      labelOffset: const Offset(12, 0),
+      canvasSize: size,
     );
   }
 
@@ -854,6 +885,7 @@ class _DynamicGuidePainter extends CustomPainter {
     Offset labelOffset = Offset.zero,
     double perpendicularOffset = 0.0,
     bool rotateParallel = false,
+    Size? canvasSize,
   }) {
     final color = isActive
         ? AppColors.brandGold
@@ -881,17 +913,11 @@ class _DynamicGuidePainter extends CustomPainter {
       perp = Offset(-dy / len * perpendicularOffset, dx / len * perpendicularOffset);
     }
 
-    // Midpoint with offset
-    final mid = Offset(
-      (start.dx + end.dx) * 0.5 + labelOffset.dx + perp.dx,
-      (start.dy + end.dy) * 0.5 + labelOffset.dy + perp.dy,
-    );
-
     final textSpan = TextSpan(
       text: label,
       style: TextStyle(
         color: isActive ? AppColors.brandGold : const Color(0xFF94A3B8),
-        fontSize: isActive ? 13 : 10.5,
+        fontSize: isActive ? 12.5 : 10.5,
         fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
         letterSpacing: 0.4,
       ),
@@ -902,10 +928,24 @@ class _DynamicGuidePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
+    final badgeWidth = textPainter.width + (isActive ? 16 : 10);
+    final badgeHeight = textPainter.height + (isActive ? 6 : 4);
+
+    // Midpoint with offset
+    double midX = (start.dx + end.dx) * 0.5 + labelOffset.dx + perp.dx;
+    final midY = (start.dy + end.dy) * 0.5 + labelOffset.dy + perp.dy;
+
+    // Hard boundary clamping to guarantee NO clipping
+    if (canvasSize != null && !rotateParallel) {
+      midX = midX.clamp(badgeWidth * 0.5 + 6, canvasSize.width - badgeWidth * 0.5 - 6);
+    }
+
+    final mid = Offset(midX, midY);
+
     final badgeRect = Rect.fromCenter(
       center: Offset.zero,
-      width: textPainter.width + (isActive ? 18 : 10),
-      height: textPainter.height + (isActive ? 8 : 4),
+      width: badgeWidth,
+      height: badgeHeight,
     );
 
     canvas.save();
