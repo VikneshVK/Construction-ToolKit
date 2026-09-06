@@ -25,7 +25,7 @@ void main() {
                   pitch: rafter.pitch,
                   run: rafter.totalRun,
                   rise: rafter.totalRise,
-                  overhang: rafter.overhangLength,
+                  overhang: rafter.overhangRun,
                   rafterLength: rafter.commonRafterLength,
                   activeMeasurement: selectedMode,
                   onMeasurementSelected: (m) => setState(() => selectedMode = m),
@@ -44,7 +44,7 @@ void main() {
       expect(find.text('Pitch'), findsOneWidget);
       expect(find.text('Run'), findsOneWidget);
       expect(find.text('Overhang'), findsOneWidget);
-      expect(find.text('Rafter Length'), findsOneWidget);
+      expect(find.text('Rafter'), findsOneWidget);
 
       // Verify initial active mode explanation is Run
       expect(find.text('HORIZONTAL RUN'), findsWidgets);
@@ -66,8 +66,8 @@ void main() {
       expect(find.text('EAVE OVERHANG'), findsWidgets);
       expect(find.text('Horizontal projection of the roof rafter beyond the exterior wall line.'), findsOneWidget);
 
-      // Tap Rafter Length control
-      await tester.tap(find.text('Rafter Length'));
+      // Tap Rafter control
+      await tester.tap(find.text('Rafter'));
       await tester.pumpAndSettle();
 
       expect(selectedMode, RoofMeasurementMode.rafterLength);

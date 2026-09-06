@@ -5,7 +5,8 @@ import 'measurement.dart';
 class RafterResult {
   final Length commonRafterLength; // Theoretical line length (ridge to wall plate)
   final Length totalRafterLength;  // Including overhang
-  final Length overhangLength;
+  final Length overhangLength;     // Sloped rafter extension length
+  final Length overhangRun;        // Horizontal overhang projection beyond wall
   final Length totalRise;
   final Length totalRun;
   final RoofPitch pitch;
@@ -17,6 +18,7 @@ class RafterResult {
     required this.commonRafterLength,
     required this.totalRafterLength,
     required this.overhangLength,
+    required this.overhangRun,
     required this.totalRise,
     required this.totalRun,
     required this.pitch,
@@ -76,7 +78,8 @@ class RoofingMath {
     final lineLengthInches = math.sqrt(math.pow(runInches, 2) + math.pow(riseInches, 2));
 
     // Overhang line length
-    final overRunInches = overhangRun?.toInches() ?? 0.0;
+    final overRun = overhangRun ?? Length.zero;
+    final overRunInches = overRun.toInches();
     final overRiseInches = (overRunInches / 12.0) * resolvedPitch.riseIn12;
     final overhangLineInches = math.sqrt(math.pow(overRunInches, 2) + math.pow(overRiseInches, 2));
 
@@ -84,6 +87,7 @@ class RoofingMath {
       commonRafterLength: Length.fromInches(lineLengthInches),
       totalRafterLength: Length.fromInches(lineLengthInches + overhangLineInches),
       overhangLength: Length.fromInches(overhangLineInches),
+      overhangRun: overRun,
       totalRise: Length.fromInches(riseInches),
       totalRun: run,
       pitch: resolvedPitch,

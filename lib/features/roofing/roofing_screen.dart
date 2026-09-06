@@ -156,7 +156,7 @@ class _RoofingScreenState extends State<RoofingScreen> {
                       pitch: _rafterResult!.pitch,
                       run: _rafterResult!.totalRun,
                       rise: _rafterResult!.totalRise,
-                      overhang: _rafterResult!.overhangLength,
+                      overhang: _rafterResult!.overhangRun,
                       rafterLength: _rafterResult!.commonRafterLength,
                       activeMeasurement: _activeRoofMode,
                       isMetric: isMetric,

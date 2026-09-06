@@ -214,8 +214,6 @@ class _BuildCalcRoofDiagramState extends State<BuildCalcRoofDiagram> with Single
               );
             },
           ),
-
-          // Selectable Measurement Controls: [ Pitch ] [ Run ] [ Overhang ] [ Rafter Length ]
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
@@ -226,12 +224,10 @@ class _BuildCalcRoofDiagramState extends State<BuildCalcRoofDiagram> with Single
                 const SizedBox(width: 6),
                 _buildModeButton(RoofMeasurementMode.overhang, 'Overhang'),
                 const SizedBox(width: 6),
-                _buildModeButton(RoofMeasurementMode.rafterLength, 'Rafter Length'),
+                _buildModeButton(RoofMeasurementMode.rafterLength, 'Rafter'),
               ],
             ),
           ),
-
-          // Short Explanation Block for the Active Measurement
           Container(
             margin: const EdgeInsets.only(left: 10, right: 10, bottom: 12, top: 2),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -381,7 +377,6 @@ class _ModeExplanation {
   });
 }
 
-/// CustomPainter rendering proportional roof geometry and active mode highlight.
 class _RoofBlueprintPainter extends CustomPainter {
   final RoofPitch pitch;
   final Length run;
@@ -405,28 +400,24 @@ class _RoofBlueprintPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Subtle Blueprint Grid
     _paintGrid(canvas, size);
 
-    // 2. Proportional Geometry Calculations
     final runInches = run.toInches().clamp(12.0, 600.0);
     final pitchRise = pitch.riseIn12.clamp(1.0, 24.0);
     final overhangInches = overhang.toInches().clamp(0.0, runInches * 0.5);
 
-    final wallLeftX = size.width * 0.24;
-    final centerRidgeX = size.width * 0.50;
-    final wallRightX = size.width * 0.76;
+    final wallLeftX = size.width * 0.28;
+    final centerRidgeX = size.width * 0.56;
+    final wallRightX = size.width * 0.84;
     final runVisualW = centerRidgeX - wallLeftX;
 
-    // Visual rise proportional to pitch
     final slopeRatio = (pitchRise / 12.0);
-    final visualRiseH = (runVisualW * slopeRatio * 0.95).clamp(26.0, size.height * 0.44);
+    final visualRiseH = (runVisualW * slopeRatio * 0.92).clamp(24.0, size.height * 0.42);
 
-    final wallPlateY = size.height * 0.60;
+    final wallPlateY = size.height * 0.58;
     final ridgeY = wallPlateY - visualRiseH;
 
-    // Overhang proportional width
-    final overhangRatio = (overhangInches / runInches).clamp(0.06, 0.40);
+    final overhangRatio = (overhangInches / runInches).clamp(0.08, 0.35);
     final overhangVisualW = runVisualW * overhangRatio;
     final visualSlope = visualRiseH / runVisualW;
 
@@ -446,73 +437,76 @@ class _RoofBlueprintPainter extends CustomPainter {
     final isOverhang = activeMeasurement == RoofMeasurementMode.overhang;
     final isRafter = activeMeasurement == RoofMeasurementMode.rafterLength;
 
-    // 3. Draw Inactive Roof Skeleton & Stud Walls
+    final refLinePaint = Paint()
+      ..color = const Color(0xFF334155)
+      ..strokeWidth = 1.0;
+
+    final refDashedPaint = Paint()
+      ..color = const Color(0xFF334155).withValues(alpha: 0.7)
+      ..strokeWidth = 1.0;
+
+    final bottomRefY = wallPlateY + 34.0;
+
+    _drawDashedVerticalLine(canvas, centerRidgeX, ridgeY, bottomRefY, isRun || isRafter ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF334155));
+    _drawReferenceLabel(canvas, Offset(centerRidgeX, bottomRefY + 6), 'RIDGE PLUMB', isRun || isRafter);
+
+    _drawDashedVerticalLine(canvas, wallLeftX, wallPlateY, bottomRefY, isRun || isOverhang || isRafter ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF334155));
+    _drawReferenceLabel(canvas, Offset(wallLeftX, bottomRefY + 6), 'WALL REF', isRun || isOverhang || isRafter);
+
+    _drawDashedVerticalLine(canvas, eavesLeftX, eavesLeftY, bottomRefY, isOverhang ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF334155));
+    _drawReferenceLabel(canvas, Offset(eavesLeftX, bottomRefY + 6), 'EAVE END', isOverhang);
+
+    canvas.drawLine(pWallLeft, Offset(pWallLeft.dx, pWallLeft.dy + 24), refLinePaint);
+    canvas.drawLine(pWallRight, Offset(pWallRight.dx, pWallRight.dy + 24), refLinePaint);
+    canvas.drawLine(pWallLeft, pWallRight, refDashedPaint);
+
     final skeletonPaint = Paint()
       ..color = const Color(0xFF475569)
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
 
-    final wallPaint = Paint()
-      ..color = const Color(0xFF334155)
-      ..strokeWidth = 1.5;
-
-    // Wall Studs
-    canvas.drawLine(pWallLeft, Offset(pWallLeft.dx, pWallLeft.dy + 32), wallPaint);
-    canvas.drawLine(pWallRight, Offset(pWallRight.dx, pWallRight.dy + 32), wallPaint);
-
-    // Center Plumb Line (dashed / subtle)
-    final plumbPaint = Paint()
-      ..color = const Color(0xFF1E293B)
-      ..strokeWidth = 1.0;
-    canvas.drawLine(pRidge, Offset(pRidge.dx, wallPlateY + 32), plumbPaint);
-
-    // Base Rafter Profile
     final roofPath = Path()
       ..moveTo(pEavesLeft.dx, pEavesLeft.dy)
       ..lineTo(pRidge.dx, pRidge.dy)
       ..lineTo(pEavesRight.dx, pEavesRight.dy);
     canvas.drawPath(roofPath, skeletonPaint);
 
-    // 4. Dimension Elevation Baseline Y
-    final dimY = wallPlateY + 18.0;
+    final dimY = wallPlateY + 16.0;
 
-    // 5. Draw Active Dimension Visualizations
+    if (isPitch) {
+      _paintPitchIndicator(
+        canvas: canvas,
+        rafterStart: pEavesLeft,
+        rafterEnd: pRidge,
+        isActive: true,
+      );
+    }
 
-    // --- A. PITCH MODE ---
-    _paintPitchIndicator(
-      canvas: canvas,
-      rafterStart: pEavesLeft,
-      rafterEnd: pRidge,
-      isActive: isPitch,
-    );
+    if (isRun) {
+      final runValStr = isMetric ? '${run.toMeters().toStringAsFixed(2)} m' : run.toFeetInchesFraction();
+      _paintDimensionLine(
+        canvas: canvas,
+        start: Offset(pWallLeft.dx, dimY),
+        end: Offset(pRidge.dx, dimY),
+        label: 'RUN: $runValStr',
+        isActive: true,
+        pulseFactor: pulseFactor,
+      );
+    }
 
-    // --- B. RUN MODE ---
-    final runValStr = isMetric ? '${run.toMeters().toStringAsFixed(2)} m' : run.toFeetInchesFraction();
-    _paintDimensionLine(
-      canvas: canvas,
-      start: Offset(pWallLeft.dx, dimY),
-      end: Offset(pRidge.dx, dimY),
-      label: 'RUN: $runValStr',
-      isActive: isRun,
-      pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 14),
-    );
+    if (isOverhang) {
+      final overValStr = isMetric ? '${(overhang.toMillimeters() / 10).round()} cm' : overhang.toInchesFraction();
+      _paintDimensionLine(
+        canvas: canvas,
+        start: Offset(pEavesLeft.dx, dimY),
+        end: Offset(pWallLeft.dx, dimY),
+        label: 'OVERHANG: $overValStr',
+        isActive: true,
+        pulseFactor: pulseFactor,
+      );
+    }
 
-    // --- C. OVERHANG MODE ---
-    final overValStr = isMetric ? '${(overhang.toMillimeters() / 10).round()} cm' : overhang.toInchesFraction();
-    _paintDimensionLine(
-      canvas: canvas,
-      start: Offset(pEavesLeft.dx, dimY),
-      end: Offset(pWallLeft.dx, dimY),
-      label: 'OVERHANG: $overValStr',
-      isActive: isOverhang,
-      pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 14),
-    );
-
-    // --- D. RAFTER LENGTH MODE ---
     if (isRafter) {
-      // Highlight the sloped rafter line with gold glow
       final rafterGlowPaint = Paint()
         ..color = AppColors.brandGold.withValues(alpha: 0.25 + 0.15 * pulseFactor)
         ..strokeWidth = 5.0
@@ -525,7 +519,6 @@ class _RoofBlueprintPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(pWallLeft, pRidge, rafterGoldPaint);
 
-      // Sloped dimension line parallel to rafter
       final rafterValStr = isMetric ? '${rafterLength.toMeters().toStringAsFixed(3)} m' : rafterLength.toFeetInchesFraction();
       _paintSlopedDimension(
         canvas: canvas,
@@ -536,7 +529,6 @@ class _RoofBlueprintPainter extends CustomPainter {
       );
     }
 
-    // 6. Draw Reference Nodes (Ridge ●, Wall ●, Eaves ●)
     _drawNode(canvas, pRidge, isRun || isRafter);
     _drawNode(canvas, pWallLeft, isRun || isOverhang || isRafter);
     _drawNode(canvas, pEavesLeft, isOverhang);
@@ -544,7 +536,7 @@ class _RoofBlueprintPainter extends CustomPainter {
 
   void _paintGrid(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = const Color(0xFF1E293B).withValues(alpha: 0.5)
+      ..color = const Color(0xFF1E293B).withValues(alpha: 0.45)
       ..strokeWidth = 0.5;
 
     const step = 16.0;
@@ -556,14 +548,41 @@ class _RoofBlueprintPainter extends CustomPainter {
     }
   }
 
+  void _drawDashedVerticalLine(Canvas canvas, double x, double startY, double endY, Color color) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0;
+
+    const dashH = 4.0;
+    const spaceH = 3.0;
+    double currentY = startY;
+    while (currentY < endY) {
+      final y2 = (currentY + dashH).clamp(startY, endY);
+      canvas.drawLine(Offset(x, currentY), Offset(x, y2), paint);
+      currentY += dashH + spaceH;
+    }
+  }
+
+  void _drawReferenceLabel(Canvas canvas, Offset p, String label, bool isActive) {
+    final textSpan = TextSpan(
+      text: label,
+      style: TextStyle(
+        fontSize: 8.5,
+        fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+        color: isActive ? AppColors.brandGold : const Color(0xFF64748B),
+        letterSpacing: 0.4,
+      ),
+    );
+    final tp = TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
+    tp.paint(canvas, Offset(p.dx - tp.width * 0.5, p.dy));
+  }
+
   void _paintPitchIndicator({
     required Canvas canvas,
     required Offset rafterStart,
     required Offset rafterEnd,
     required bool isActive,
   }) {
-    final color = isActive ? AppColors.brandGold : const Color(0xFF64748B);
-
     final dx = rafterEnd.dx - rafterStart.dx;
     final dy = rafterStart.dy - rafterEnd.dy;
     final slope = dx > 0 ? (dy / dx) : 0.6;
@@ -573,7 +592,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       (rafterStart.dy + rafterEnd.dy) * 0.5,
     );
 
-    const triW = 34.0;
+    const triW = 38.0;
     final triH = triW * slope;
 
     final p0 = Offset(mid.dx - triW * 0.5 - 4, mid.dy - triH - 8);
@@ -586,20 +605,17 @@ class _RoofBlueprintPainter extends CustomPainter {
       ..lineTo(p2.dx, p2.dy)
       ..close();
 
-    if (isActive) {
-      final fillPaint = Paint()
-        ..color = AppColors.brandGold.withValues(alpha: 0.15 + 0.1 * pulseFactor)
-        ..style = PaintingStyle.fill;
-      canvas.drawPath(path, fillPaint);
-    }
+    final fillPaint = Paint()
+      ..color = AppColors.brandGold.withValues(alpha: 0.15 + 0.1 * pulseFactor)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
 
     final strokePaint = Paint()
-      ..color = color
-      ..strokeWidth = isActive ? 2.2 : 1.2
+      ..color = AppColors.brandGold
+      ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
     canvas.drawPath(path, strokePaint);
 
-    // Right-angle symbol at P1
     const sqSize = 5.0;
     final sqPath = Path()
       ..moveTo(p1.dx - sqSize, p1.dy)
@@ -607,44 +623,62 @@ class _RoofBlueprintPainter extends CustomPainter {
       ..lineTo(p1.dx, p1.dy + sqSize);
     canvas.drawPath(sqPath, strokePaint..strokeWidth = 1.0);
 
-    // Dimension text badge above triangle
-    final pitchText = pitch.pitchNotation;
+    final run12Span = const TextSpan(
+      text: '12"',
+      style: TextStyle(
+        color: AppColors.brandGold,
+        fontSize: 8.5,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+    final run12Tp = TextPainter(text: run12Span, textDirection: TextDirection.ltr)..layout();
+    run12Tp.paint(canvas, Offset(p0.dx + (triW - run12Tp.width) * 0.5, p0.dy - 10));
+
+    final riseNum = pitch.riseIn12 % 1 == 0
+        ? pitch.riseIn12.toInt().toString()
+        : pitch.riseIn12.toStringAsFixed(1);
+    final riseSpan = TextSpan(
+      text: '$riseNum"',
+      style: const TextStyle(
+        color: AppColors.brandGold,
+        fontSize: 8.5,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+    final riseTp = TextPainter(text: riseSpan, textDirection: TextDirection.ltr)..layout();
+    riseTp.paint(canvas, Offset(p1.dx + 4, p0.dy + (triH - riseTp.height) * 0.5));
+
+    final pitchText = '${pitch.pitchNotation} (${pitch.pitchDegrees.toStringAsFixed(1)}°)';
     final textSpan = TextSpan(
       text: 'PITCH: $pitchText',
-      style: TextStyle(
-        color: isActive ? AppColors.brandGold : const Color(0xFF94A3B8),
-        fontSize: isActive ? 12.5 : 10.0,
-        fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+      style: const TextStyle(
+        color: AppColors.brandGold,
+        fontSize: 12.0,
+        fontWeight: FontWeight.w800,
         letterSpacing: 0.4,
       ),
     );
 
     final tp = TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
-    final badgeCenter = Offset(p0.dx + triW * 0.5, p0.dy - 12);
+    final badgeCenter = Offset(p0.dx + triW * 0.5, p0.dy - 22);
 
     final badgeRect = Rect.fromCenter(
       center: badgeCenter,
-      width: tp.width + (isActive ? 16 : 8),
-      height: tp.height + (isActive ? 6 : 4),
+      width: tp.width + 16,
+      height: tp.height + 6,
     );
 
-    if (isActive) {
-      final glowBadge = Paint()
-        ..color = AppColors.brandGold.withValues(alpha: 0.15 + 0.1 * pulseFactor)
-        ..style = PaintingStyle.fill;
-      canvas.drawRRect(RRect.fromRectAndRadius(badgeRect.inflate(3), const Radius.circular(6)), glowBadge);
-    }
+    final glowBadge = Paint()
+      ..color = AppColors.brandGold.withValues(alpha: 0.15 + 0.1 * pulseFactor)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(RRect.fromRectAndRadius(badgeRect.inflate(3), const Radius.circular(6)), glowBadge);
 
     final bgBadge = Paint()
-      ..color = isActive
-          ? AppColors.bgSurface.withValues(alpha: 0.95)
-          : const Color(0xFF0F172A).withValues(alpha: 0.85)
+      ..color = AppColors.bgSurface.withValues(alpha: 0.95)
       ..style = PaintingStyle.fill;
     final borderBadge = Paint()
-      ..color = isActive
-          ? AppColors.brandGold.withValues(alpha: 0.8 + 0.2 * pulseFactor)
-          : const Color(0xFF334155)
-      ..strokeWidth = isActive ? 1.6 : 0.8
+      ..color = AppColors.brandGold.withValues(alpha: 0.8 + 0.2 * pulseFactor)
+      ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke;
 
     canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(4)), bgBadge);
@@ -662,8 +696,8 @@ class _RoofBlueprintPainter extends CustomPainter {
     required double pulseFactor,
     Offset labelOffset = Offset.zero,
   }) {
-    final color = isActive ? AppColors.brandGold : const Color(0xFF64748B);
-    final strokeWidth = isActive ? 3.0 : 1.4;
+    final color = AppColors.brandGold;
+    final strokeWidth = 2.5;
 
     final linePaint = Paint()
       ..color = color
@@ -678,10 +712,10 @@ class _RoofBlueprintPainter extends CustomPainter {
 
     final textSpan = TextSpan(
       text: label,
-      style: TextStyle(
-        color: isActive ? AppColors.brandGold : const Color(0xFF94A3B8),
-        fontSize: isActive ? 12.5 : 10.0,
-        fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+      style: const TextStyle(
+        color: AppColors.brandGold,
+        fontSize: 12.0,
+        fontWeight: FontWeight.w800,
         letterSpacing: 0.4,
       ),
     );
@@ -689,27 +723,21 @@ class _RoofBlueprintPainter extends CustomPainter {
     final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
     final badgeRect = Rect.fromCenter(
       center: mid,
-      width: textPainter.width + (isActive ? 16 : 8),
-      height: textPainter.height + (isActive ? 6 : 4),
+      width: textPainter.width + 16,
+      height: textPainter.height + 6,
     );
 
-    if (isActive) {
-      final glowBadge = Paint()
-        ..color = AppColors.brandGold.withValues(alpha: 0.15 + 0.1 * pulseFactor)
-        ..style = PaintingStyle.fill;
-      canvas.drawRRect(RRect.fromRectAndRadius(badgeRect.inflate(3), const Radius.circular(6)), glowBadge);
-    }
+    final glowBadge = Paint()
+      ..color = AppColors.brandGold.withValues(alpha: 0.15 + 0.1 * pulseFactor)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(RRect.fromRectAndRadius(badgeRect.inflate(3), const Radius.circular(6)), glowBadge);
 
     final bgBadge = Paint()
-      ..color = isActive
-          ? AppColors.bgSurface.withValues(alpha: 0.95)
-          : const Color(0xFF0F172A).withValues(alpha: 0.85)
+      ..color = AppColors.bgSurface.withValues(alpha: 0.95)
       ..style = PaintingStyle.fill;
     final borderBadge = Paint()
-      ..color = isActive
-          ? AppColors.brandGold.withValues(alpha: 0.8 + 0.2 * pulseFactor)
-          : const Color(0xFF334155)
-      ..strokeWidth = isActive ? 1.6 : 0.8
+      ..color = AppColors.brandGold.withValues(alpha: 0.8 + 0.2 * pulseFactor)
+      ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke;
 
     canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(4)), bgBadge);
@@ -730,7 +758,6 @@ class _RoofBlueprintPainter extends CustomPainter {
     final len = math.sqrt(dx * dx + dy * dy);
     if (len == 0) return;
 
-    // Offset line perpendicular to slope (upward)
     const offsetDist = 18.0;
     final perp = Offset(dy / len * offsetDist, -dx / len * offsetDist);
 
@@ -746,14 +773,13 @@ class _RoofBlueprintPainter extends CustomPainter {
     _drawArrowOrTick(canvas, oStart, oEnd, linePaint, true);
     _drawArrowOrTick(canvas, oEnd, oStart, linePaint, true);
 
-    // Parallel text badge
-    final mid = Offset((oStart.dx + oEnd.dx) * 0.5 + perp.dx * 0.7, (oStart.dy + oEnd.dy) * 0.5 + perp.dy * 0.7);
+    final mid = Offset((oStart.dx + oEnd.dx) * 0.5 + perp.dx * 0.6, (oStart.dy + oEnd.dy) * 0.5 + perp.dy * 0.6);
 
     final textSpan = TextSpan(
       text: label,
       style: const TextStyle(
         color: AppColors.brandGold,
-        fontSize: 12.5,
+        fontSize: 12.0,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.4,
       ),
