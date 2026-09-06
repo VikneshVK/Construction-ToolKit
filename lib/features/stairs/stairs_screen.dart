@@ -10,8 +10,6 @@ import '../../core/components/inputs/buildcalc_fraction_bar.dart';
 import '../../core/components/display/buildcalc_result_hero.dart';
 import '../../core/components/display/buildcalc_code_check.dart';
 import '../../core/components/controls/buildcalc_unit_selector.dart';
-import '../../core/components/blueprint/blueprint_canvas.dart';
-import '../../core/components/blueprint/stair_blueprint_painter.dart';
 import '../../core/persistence/local_storage.dart';
 import '../../core/components/dialogs/unit_settings_dialog.dart';
 import '../../core/theme/unit_settings.dart';
@@ -138,16 +136,6 @@ class _StairsScreenState extends State<StairsScreen> {
       builder: (context, _) {
         final isMetric = UnitSettings.instance.isMetric;
 
-        final riseValueStr = isMetric
-            ? '${_riseMmCtrl.text} mm'
-            : '${_riseFeetCtrl.text}\' ${_riseFraction.toMixedString()}"';
-        final treadValueStr = isMetric
-            ? '${_preferredTreadMmCtrl.text} mm'
-            : '${_preferredTreadCtrl.text}"';
-        final runValueStr = isMetric
-            ? '${_availableRunMetersCtrl.text} m'
-            : '${_availableRunFeetCtrl.text} ft';
-
         return Scaffold(
           appBar: AppBar(
             title: const Text('Stairs & Handrails'),
@@ -169,9 +157,27 @@ class _StairsScreenState extends State<StairsScreen> {
                     type: MeasurementGuideType.stairs,
                     activeDimension: _activeStairDim,
                     values: {
-                      'rise': riseValueStr,
-                      'tread': treadValueStr,
-                      'run': runValueStr,
+                      'rise': isMetric
+                          ? (_stairResult != null
+                              ? '${_stairResult!.totalRise.toMillimeters().toStringAsFixed(0)} mm'
+                              : '${_riseMmCtrl.text} mm')
+                          : (_stairResult != null
+                              ? _stairResult!.totalRise.toFeetInchesFraction()
+                              : '${_riseFeetCtrl.text}\' ${_riseFraction.toMixedString()}"'),
+                      'tread': isMetric
+                          ? (_stairResult != null
+                              ? '${_stairResult!.treadDepth.toMillimeters().toStringAsFixed(0)} mm'
+                              : '${_preferredTreadMmCtrl.text} mm')
+                          : (_stairResult != null
+                              ? _stairResult!.treadDepth.toInchesFraction()
+                              : '${_preferredTreadCtrl.text}"'),
+                      'run': isMetric
+                          ? (_stairResult != null
+                              ? '${_stairResult!.totalRun.toMeters().toStringAsFixed(2)} m'
+                              : '${_availableRunMetersCtrl.text} m')
+                          : (_stairResult != null
+                              ? _stairResult!.totalRun.toFeetInchesFraction()
+                              : '${_availableRunFeetCtrl.text} ft'),
                     },
                     onDimensionSelected: (dim) => setState(() => _activeStairDim = dim),
                   ),
@@ -230,17 +236,9 @@ class _StairsScreenState extends State<StairsScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  if (_stairResult != null) ...[
-                    BlueprintCanvas(
-                      painter: StairBlueprintPainter(result: _stairResult!),
-                      height: 190,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
-
                   if (isMetric) ...[
                     BuildCalcInput(
-                      label: 'Total Height (Floor to Floor)',
+                      label: 'Total Rise (Floor to Floor)',
                       unit: 'mm',
                       controller: _riseMmCtrl,
                       infoDescription: 'Vertical distance from the bottom finished floor to the top finished landing floor.',
@@ -255,12 +253,12 @@ class _StairsScreenState extends State<StairsScreen> {
                     const SizedBox(height: AppSpacing.md),
                     if (_solveMode == StairSolveMode.comfortableTread)
                       BuildCalcInput(
-                        label: 'Step Depth (Walking Surface)',
+                        label: 'Tread Depth',
                         unit: 'mm',
                         controller: _preferredTreadMmCtrl,
-                        infoDescription: 'Horizontal depth where your foot lands on each step.',
+                        infoDescription: 'Horizontal walking surface depth where your foot lands on each step (10" is standard).',
                         infoTip: 'Standard comfortable depth is 250 mm to 280 mm (10" - 11").',
-                        infoTradeTerm: 'Unit Tread Depth',
+                        infoTradeTerm: 'Tread Depth (T)',
                         onTap: () => setState(() => _activeStairDim = 'tread'),
                         onFocusChange: (f) {
                           if (f) setState(() => _activeStairDim = 'tread');
@@ -269,11 +267,11 @@ class _StairsScreenState extends State<StairsScreen> {
                       )
                     else
                       BuildCalcInput(
-                        label: 'Available Horizontal Space',
+                        label: 'Available Total Run',
                         unit: 'm',
                         controller: _availableRunMetersCtrl,
                         infoDescription: 'Total horizontal space available on the lower floor for the stairs to land.',
-                        infoTradeTerm: 'Total Run Opening',
+                        infoTradeTerm: 'Available Total Run',
                         onTap: () => setState(() => _activeStairDim = 'run'),
                         onFocusChange: (f) {
                           if (f) setState(() => _activeStairDim = 'run');
@@ -282,7 +280,7 @@ class _StairsScreenState extends State<StairsScreen> {
                       ),
                   ] else ...[
                     BuildCalcInput(
-                      label: 'Total Height (Feet)',
+                      label: 'Total Rise (Feet)',
                       unit: 'ft',
                       controller: _riseFeetCtrl,
                       infoDescription: 'Vertical height from bottom floor to top landing.',
@@ -309,11 +307,11 @@ class _StairsScreenState extends State<StairsScreen> {
                     const SizedBox(height: AppSpacing.md),
                     if (_solveMode == StairSolveMode.comfortableTread)
                       BuildCalcInput(
-                        label: 'Step Depth (Tread)',
+                        label: 'Tread Depth',
                         unit: 'in',
                         controller: _preferredTreadCtrl,
-                        infoDescription: 'Horizontal depth where your foot lands on each step (10" is standard).',
-                        infoTradeTerm: 'Unit Tread Depth',
+                        infoDescription: 'Horizontal walking surface depth where your foot lands on each step (10" is standard).',
+                        infoTradeTerm: 'Tread Depth (T)',
                         onTap: () => setState(() => _activeStairDim = 'tread'),
                         onFocusChange: (f) {
                           if (f) setState(() => _activeStairDim = 'tread');
@@ -322,7 +320,7 @@ class _StairsScreenState extends State<StairsScreen> {
                       )
                     else
                       BuildCalcInput(
-                        label: 'Available Horizontal Space',
+                        label: 'Available Total Run',
                         unit: 'ft',
                         controller: _availableRunFeetCtrl,
                         infoDescription: 'Total horizontal space available on the lower floor.',
@@ -341,14 +339,17 @@ class _StairsScreenState extends State<StairsScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     BuildCalcResultHero(
                       title: 'Stair Steps Summary',
-                      primaryResult: '${_stairResult!.numberOfRisers} Steps Needed',
-                      primaryUnit: 'Steps',
+                      primaryResult: '${_stairResult!.numberOfRisers} RISERS',
+                      primaryUnit: isMetric
+                          ? 'Riser: ${_stairResult!.riserHeight.toMillimeters().toStringAsFixed(1)} mm'
+                          : 'Riser: ${_stairResult!.riserHeight.toInchesFraction()}',
                       subtitle: isMetric
-                          ? 'Each Step Height: ${_stairResult!.riserHeight.toMillimeters().toStringAsFixed(1)} mm (${_stairResult!.riserHeight.toInchesFraction()}) · ${_stairResult!.numberOfTreads} Flat Steps @ ${_stairResult!.treadDepth.toMillimeters().toStringAsFixed(0)} mm'
-                          : 'Each Step Height: ${_stairResult!.riserHeight.toInchesFraction()} · ${_stairResult!.numberOfTreads} Flat Steps @ ${_stairResult!.treadDepth.toInchesFraction()}',
+                          ? '${_stairResult!.numberOfTreads} TREADS @ ${_stairResult!.treadDepth.toMillimeters().toStringAsFixed(0)} mm · Total Run: ${_stairResult!.totalRun.toMeters().toStringAsFixed(2)} m'
+                          : '${_stairResult!.numberOfTreads} TREADS @ ${_stairResult!.treadDepth.toInchesFraction()} · Total Run: ${_stairResult!.totalRun.toFeetInchesFraction()}',
                       secondaryMetrics: [
-                        'Total Horizontal Run: ${isMetric ? "${_stairResult!.totalRun.toMeters().toStringAsFixed(2)} m" : _stairResult!.totalRun.toFeetInchesFraction()}',
+                        'Total Rise: ${isMetric ? "${_stairResult!.totalRise.toMillimeters().toStringAsFixed(0)} mm" : _stairResult!.totalRise.toFeetInchesFraction()}',
                         'Incline Angle: ${_stairResult!.inclineAngleDegrees.toStringAsFixed(1)}°',
+                        'Diagonal Stringer: ${isMetric ? "${_stairResult!.stringerLength.toMeters().toStringAsFixed(3)} m" : _stairResult!.stringerLength.toFeetInchesFraction()}',
                       ],
                       accentColor: AppColors.categoryStairs,
                       onSave: _saveCalculation,
@@ -356,11 +357,13 @@ class _StairsScreenState extends State<StairsScreen> {
                     const SizedBox(height: AppSpacing.lg),
 
                     TradeDetailsExpansion(
-                      title: 'Show Stringer Wood Cut Details & Code Check',
+                      title: 'Stringer & Code Details',
                       children: [
                         _buildDetailRow('Diagonal Stringer Board Length', isMetric ? '${_stairResult!.stringerLength.toMeters().toStringAsFixed(3)} m (${_stairResult!.stringerLength.toFeetInchesFraction()})' : _stairResult!.stringerLength.toFeetInchesFraction()),
                         _buildDetailRow('Incline Slope Angle', '${_stairResult!.inclineAngleDegrees.toStringAsFixed(1)}° (Ideal: 30° - 37°)'),
-                        _buildDetailRow('Step Stride Formula (2R + T)', '${((2 * _stairResult!.riserHeight.toInches()) + _stairResult!.treadDepth.toInches()).toStringAsFixed(1)}" (Target: 24" - 25")'),
+                        _buildDetailRow('Step Stride Formula (2R + T)', '${((2 * _stairResult!.riserHeight.toInches()) + _stairResult!.treadDepth.toInches()).toStringAsFixed(1)}" (Target: 24" - 25.5")'),
+                        _buildDetailRow('Code Status', _stairResult!.codeReport.codeLabel),
+                        _buildDetailRow('Comfort Evaluation', _stairResult!.codeReport.comfortLabel),
                         _buildDetailRow('Safety Code Reference', _stairResult!.codeReport.ruleReference),
                       ],
                     ),

@@ -4,6 +4,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/unit_settings.dart';
 import '../../core/components/icons/custom_category_icons.dart';
+import '../../core/components/icons/buildcalc_app_logo.dart';
 import '../../core/components/dialogs/unit_settings_dialog.dart';
 import '../../core/persistence/local_storage.dart';
 
@@ -20,6 +21,17 @@ class HomeScreen extends StatelessWidget {
     required this.onSelectCategory,
   });
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return 'Good morning,';
+    } else if (hour >= 12 && hour < 17) {
+      return 'Good afternoon,';
+    } else {
+      return 'Good evening,';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final recent = LocalStorageService.instance.getHistory().take(3).toList();
@@ -34,24 +46,32 @@ class HomeScreen extends StatelessWidget {
             automaticallyImplyLeading: false,
             title: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.brandGold,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'BUILDCALC',
-                    style: TextStyle(
-                      color: AppColors.textInverse,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
-                    ),
+                const BuildCalcAppLogo(size: 22, withBackground: false),
+                const SizedBox(width: 8),
+                RichText(
+                  text: const TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Build',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Calc',
+                        style: TextStyle(
+                          color: AppColors.brandGold,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Text('Built for the Jobsite', style: TextStyle(fontSize: 15)),
               ],
             ),
             actions: [
@@ -75,7 +95,7 @@ class HomeScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Good morning,', style: AppTypography.helperText.copyWith(fontSize: 14)),
+                          Text(_getGreeting(), style: AppTypography.helperText.copyWith(fontSize: 14)),
                           const SizedBox(height: 2),
                           const Text("Let's build.", style: AppTypography.heroResult),
                         ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'core/persistence/local_storage.dart';
+import 'core/components/web/web_mobile_frame.dart';
+import 'features/splash/splash_screen.dart';
 import 'app_shell.dart';
 
 void main() async {
@@ -10,7 +12,12 @@ void main() async {
 }
 
 class BuildCalcApp extends StatelessWidget {
-  const BuildCalcApp({super.key});
+  final bool showSplash;
+
+  const BuildCalcApp({
+    super.key,
+    this.showSplash = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +25,8 @@ class BuildCalcApp extends StatelessWidget {
       title: 'BuildCalc',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const AppShell(),
+      builder: (context, child) => WebMobileFrame(child: child!),
+      home: showSplash ? const SplashScreen() : const AppShell(),
     );
   }
 }

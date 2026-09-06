@@ -324,7 +324,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         BuildCalcTabSelector<ConcreteStructureType>(
           items: ConcreteStructureType.values,
           selectedItem: _concreteType,
-          labelBuilder: (t) => t.label,
+          labelBuilder: (t) => t == ConcreteStructureType.footing ? 'Trench\nFooting' : t.label,
           onSelected: (t) {
             setState(() {
               _concreteType = t;
@@ -376,8 +376,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   label: 'Length of Area',
                   unit: lenUnit,
                   controller: _concDim1Ctrl,
-                  infoDescription: 'The longest horizontal side of your pour area.',
-                  infoTip: 'Measure with a tape along the form boards from corner to corner.',
+                  infoDescription: 'Slab length measured end to end.',
+                  infoTip: 'Measure horizontal distance from one end of the slab to the other.',
                   infoTradeTerm: 'Slab Length (L)',
                   onTap: () => setState(() => _activeConcreteDim = 'length'),
                   onFocusChange: (f) {
@@ -392,8 +392,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   label: 'Width of Area',
                   unit: lenUnit,
                   controller: _concDim2Ctrl,
-                  infoDescription: 'The shorter side of your rectangular pour area.',
-                  infoTip: 'Measure perpendicular across from form board to form board.',
+                  infoDescription: 'Slab width measured perpendicular to the length.',
+                  infoTip: 'Measure distance across perpendicular to the length.',
                   infoTradeTerm: 'Slab Width (W)',
                   onTap: () => setState(() => _activeConcreteDim = 'width'),
                   onFocusChange: (f) {
@@ -409,7 +409,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             label: 'Pour Thickness (Depth)',
             unit: thickUnit,
             controller: _concDim3Ctrl,
-            infoDescription: 'How deep the concrete slab will be poured.',
+            infoDescription: 'Vertical depth of the slab.',
             infoTip: 'Standard patio/walkway is 4" (10 cm). Vehicle driveways require 6" (15 cm).',
             infoTradeTerm: 'Slab Thickness / Depth (T)',
             onTap: () => setState(() => _activeConcreteDim = 'thickness'),
@@ -423,9 +423,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             label: 'Trench Length',
             unit: lenUnit,
             controller: _concDim1Ctrl,
-            infoDescription: 'Total continuous length of your foundation footing trench.',
-            infoTip: 'Add up the lengths of all outer foundation perimeter walls.',
-            infoTradeTerm: 'Footing Run',
+            infoDescription: 'Total continuous length along the footing trench.',
+            infoTip: 'Add up the lengths of all continuous foundation footing trenches.',
+            infoTradeTerm: 'Trench Length (L)',
             onTap: () => setState(() => _activeConcreteDim = 'length'),
             onFocusChange: (f) {
               if (f) setState(() => _activeConcreteDim = 'length');
@@ -440,8 +440,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   label: 'Trench Width',
                   unit: thickUnit,
                   controller: _concDim2Ctrl,
-                  infoDescription: 'Horizontal width across the dug footing trench.',
-                  infoTradeTerm: 'Footing Width',
+                  infoDescription: 'Trench width measured across the excavation.',
+                  infoTradeTerm: 'Trench Width (W)',
                   onTap: () => setState(() => _activeConcreteDim = 'width'),
                   onFocusChange: (f) {
                     if (f) setState(() => _activeConcreteDim = 'width');
@@ -452,11 +452,11 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: BuildCalcInput(
-                  label: 'Trench Depth',
+                  label: 'Footing Depth',
                   unit: thickUnit,
                   controller: _concDim3Ctrl,
-                  infoDescription: 'Vertical depth of concrete poured into the trench.',
-                  infoTradeTerm: 'Footing Thickness / Depth',
+                  infoDescription: 'Vertical depth of the concrete footing.',
+                  infoTradeTerm: 'Footing Depth (D)',
                   onTap: () => setState(() => _activeConcreteDim = 'depth'),
                   onFocusChange: (f) {
                     if (f) setState(() => _activeConcreteDim = 'depth');
@@ -471,12 +471,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             children: [
               Expanded(
                 child: BuildCalcInput(
-                  label: 'Pier Diameter',
+                  label: 'Column Diameter',
                   unit: thickUnit,
                   controller: _concDim1Ctrl,
-                  infoDescription: 'Width across the circular Sonotube form or hole.',
-                  infoTip: 'Standard deck pier tubes are 8", 10", or 12" (20-30 cm).',
-                  infoTradeTerm: 'Column Diameter (Ø)',
+                  infoDescription: 'Diameter of the round concrete column.',
+                  infoTip: 'Standard structural round column diameter across the center.',
+                  infoTradeTerm: 'Column Diameter (D)',
                   onTap: () => setState(() => _activeConcreteDim = 'diameter'),
                   onFocusChange: (f) {
                     if (f) setState(() => _activeConcreteDim = 'diameter');
@@ -487,12 +487,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: BuildCalcInput(
-                  label: 'Pier Height',
+                  label: 'Column Height',
                   unit: lenUnit,
                   controller: _concDim2Ctrl,
-                  infoDescription: 'Total depth from ground base to top of pier.',
-                  infoTip: 'Must extend below your local winter frost line.',
-                  infoTradeTerm: 'Pier Depth / Height',
+                  infoDescription: 'Vertical height of the round concrete column.',
+                  infoTip: 'Total vertical height of the column form.',
+                  infoTradeTerm: 'Column Height (H)',
                   onTap: () => setState(() => _activeConcreteDim = 'height'),
                   onFocusChange: (f) {
                     if (f) setState(() => _activeConcreteDim = 'height');
@@ -504,10 +504,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           BuildCalcInput(
-            label: 'Number of Piers',
+            label: 'Number of Columns',
             unit: 'count',
             controller: _concDim3Ctrl,
-            infoDescription: 'How many identical round posts/piers you are pouring.',
+            infoDescription: 'How many identical round concrete columns you are pouring.',
             onChanged: (_) => _recalculateConcrete(),
           ),
         ] else ...[
@@ -518,7 +518,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   label: 'Wall Length',
                   unit: lenUnit,
                   controller: _concDim1Ctrl,
-                  infoDescription: 'Length of the poured concrete wall.',
+                  infoDescription: 'Horizontal length of the concrete wall.',
+                  infoTradeTerm: 'Wall Length (L)',
                   onTap: () => setState(() => _activeConcreteDim = 'length'),
                   onFocusChange: (f) {
                     if (f) setState(() => _activeConcreteDim = 'length');
@@ -533,6 +534,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   unit: lenUnit,
                   controller: _concDim2Ctrl,
                   infoDescription: 'Vertical height of the wall.',
+                  infoTradeTerm: 'Wall Height (H)',
                   onTap: () => setState(() => _activeConcreteDim = 'height'),
                   onFocusChange: (f) {
                     if (f) setState(() => _activeConcreteDim = 'height');
@@ -547,7 +549,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             label: 'Wall Thickness',
             unit: thickUnit,
             controller: _concDim3Ctrl,
-            infoDescription: 'Thickness of the poured foundation wall.',
+            infoDescription: 'Depth of the wall from front to back.',
+            infoTradeTerm: 'Wall Thickness (T)',
             onTap: () => setState(() => _activeConcreteDim = 'thickness'),
             onFocusChange: (f) {
               if (f) setState(() => _activeConcreteDim = 'thickness');

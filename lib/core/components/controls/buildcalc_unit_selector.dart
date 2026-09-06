@@ -22,7 +22,7 @@ class BuildCalcTabSelector<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
+      height: 46,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.bgInput,
@@ -45,12 +45,27 @@ class BuildCalcTabSelector<T> extends StatelessWidget {
                   }
                 },
                 child: Center(
-                  child: Text(
-                    labelBuilder(item),
-                    style: isSelected
-                        ? AppTypography.inputText.copyWith(color: AppColors.textInverse, fontSize: 13)
-                        : AppTypography.inputText.copyWith(color: AppColors.textSecondary, fontSize: 13),
-                    overflow: TextOverflow.ellipsis,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                    child: Text(
+                      labelBuilder(item),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: isSelected
+                          ? AppTypography.inputText.copyWith(
+                              color: AppColors.textInverse,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              height: 1.15,
+                            )
+                          : AppTypography.inputText.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              height: 1.15,
+                            ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ),

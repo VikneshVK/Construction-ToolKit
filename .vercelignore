@@ -1,0 +1,15 @@
+.dart_tool
+.git
+.idea
+android
+ios
+linux
+windows
+macos
+test
+lib
+build/app
+build/flutter_assets
+build/unit_test_assets
+*.apk
+*.aab

@@ -4,8 +4,8 @@ import 'measurement.dart';
 /// Concrete element structure types.
 enum ConcreteStructureType {
   slab('Slab', 'Rectangular slab or driveway'),
-  footing('Footing', 'Continuous wall footing or trench'),
-  column('Column', 'Cylindrical post or pier'),
+  footing('Trench Footing', 'Continuous wall footing or trench'),
+  column('Column', 'Cylindrical concrete column'),
   wall('Wall', 'Foundation or retaining wall');
 
   final String label;

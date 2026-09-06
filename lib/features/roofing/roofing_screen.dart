@@ -206,12 +206,12 @@ class _RoofingScreenState extends State<RoofingScreen> {
                       children: [
                         Expanded(
                           child: BuildCalcInput(
-                            label: 'Horizontal Run (Half-Span)',
+                            label: 'Common Rafter Run',
                             unit: isMetric ? 'm' : 'ft',
                             controller: _runFeetCtrl,
-                            infoDescription: 'The horizontal distance from the outside of your exterior wall to the center roof ridge beam.',
+                            infoDescription: 'Horizontal distance from the ridge plumb reference to the wall reference.',
                             infoTip: 'This is half the total building width if you have a centered gable roof.',
-                            infoTradeTerm: 'Horizontal Run (R)',
+                            infoTradeTerm: 'Common Rafter Run (Run)',
                             onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.run),
                             onFocusChange: (f) {
                               if (f) setState(() => _activeRoofMode = RoofMeasurementMode.run);
@@ -238,12 +238,12 @@ class _RoofingScreenState extends State<RoofingScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     BuildCalcInput(
-                      label: 'Roof Eaves Overhang (Run)',
+                      label: 'Eave Overhang (Run)',
                       unit: isMetric ? 'cm' : 'in',
                       controller: _overhangCtrl,
-                      infoDescription: 'How far the roof extends past the outer wall to keep rain away from siding.',
+                      infoDescription: 'Horizontal projection of the roof rafter beyond the exterior wall line.',
                       infoTip: 'Standard overhang is 12" (30 cm).',
-                      infoTradeTerm: 'Eaves Overhang Run',
+                      infoTradeTerm: 'Eave Overhang',
                       onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.overhang),
                       onFocusChange: (f) {
                         if (f) setState(() => _activeRoofMode = RoofMeasurementMode.overhang);

@@ -47,17 +47,45 @@ void main() {
       expect(result.codeReport.isTreadCompliant, true);
     });
 
-    test('Stair Violation Flags Riser > 7 3/4"', () {
-      // Force 8" riser
-      final rise = Length.fromInches(80.0);
-      final result = StairMath.solve(
+    test('Comfort Mode vs Constrained Space Mode Produce Mode-Specific Solving Results', () {
+      final rise = Length.fromInches(98.5); // 98 1/2"
+
+      final comfortResult = StairMath.solve(
         totalRise: rise,
-        mode: StairSolveMode.fixedTotalRun,
-        availableRun: Length.fromInches(80.0), // 80" / 9 treads = 8.88" (Violates min 10" tread)
+        mode: StairSolveMode.comfortableTread,
+        preferredTread: Length.fromInches(10),
       );
 
-      expect(result.codeReport.isTreadCompliant, false);
-      expect(result.codeReport.status, StairCodeStatus.warning);
+      final constrainedResult = StairMath.solve(
+        totalRise: rise,
+        mode: StairSolveMode.fixedTotalRun,
+        preferredTread: Length.fromInches(10),
+      );
+
+      // Comfort mode targets ~7" riser -> 14 risers @ 7.035"
+      expect(comfortResult.numberOfRisers, 14);
+      expect(comfortResult.numberOfTreads, 13);
+      expect(comfortResult.totalRun.toInches(), 130.0);
+
+      // Constrained mode targets max code riser (up to 7.75") -> 13 risers @ 7.576" (7 9/16")
+      expect(constrainedResult.numberOfRisers, 13);
+      expect(constrainedResult.numberOfTreads, 12);
+      expect(constrainedResult.totalRun.toInches(), 120.0);
+      expect(constrainedResult.riserHeight.toInches(), closeTo(7.576, 0.01));
+      expect(constrainedResult.codeReport.isRiserCompliant, true);
+      expect(constrainedResult.codeReport.codeLabel, 'CODE: PASS');
+    });
+
+    test('Separate Code Compliance from Comfort Guidance Labels', () {
+      final rise = Length.fromInches(98.5);
+      final result = StairMath.solve(
+        totalRise: rise,
+        preferredTread: Length.fromInches(10),
+      );
+
+      expect(result.codeReport.codeLabel, 'CODE: PASS');
+      expect(result.codeReport.comfortLabel, 'COMFORT: Optimal');
+      expect(result.codeReport.isComfortCompliant, true);
     });
   });
 

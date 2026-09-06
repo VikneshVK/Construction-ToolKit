@@ -47,7 +47,7 @@ void main() {
       expect(find.text('Rafter'), findsOneWidget);
 
       // Verify initial active mode explanation is Run
-      expect(find.text('HORIZONTAL RUN'), findsWidgets);
+      expect(find.text('COMMON RAFTER RUN'), findsWidgets);
       expect(find.text('Horizontal distance from the ridge plumb reference to the wall reference.'), findsOneWidget);
 
       // Tap Pitch control
@@ -72,7 +72,7 @@ void main() {
 
       expect(selectedMode, RoofMeasurementMode.rafterLength);
       expect(find.text('RAFTER LENGTH'), findsWidgets);
-      expect(find.text('True sloped line length of the common rafter from ridge peak to wall plate.'), findsOneWidget);
+      expect(find.text('Calculated sloped length from the ridge plumb reference to the wall reference.'), findsOneWidget);
     });
   });
 
@@ -104,7 +104,7 @@ void main() {
       await tester.tap(find.widgetWithText(TextField, '12').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('HORIZONTAL RUN'), findsWidgets);
+      expect(find.text('COMMON RAFTER RUN'), findsWidgets);
     });
   });
 }

@@ -21,14 +21,17 @@ enum StairCodeStatus {
   const StairCodeStatus(this.label);
 }
 
-/// Building code compliance report for stairs.
+/// Building code compliance and architectural comfort report for stairs.
 class StairCodeReport {
   final StairCodeStatus status;
-  final String ruleReference; // e.g. "IRC 2024 Section R311.7"
+  final String ruleReference; // e.g. "IRC 2024 §R311.7 (Stairways)"
   final List<String> details;
   final bool isRiserCompliant;
   final bool isTreadCompliant;
   final bool isComfortCompliant;
+  final String codeLabel; // e.g. "CODE: PASS" or "CODE: WARNING"
+  final String comfortLabel; // e.g. "COMFORT: Optimal" or "COMFORT: Slightly outside preferred range"
+  final List<String> comfortDetails;
 
   const StairCodeReport({
     required this.status,
@@ -37,6 +40,9 @@ class StairCodeReport {
     required this.isRiserCompliant,
     required this.isTreadCompliant,
     required this.isComfortCompliant,
+    this.codeLabel = 'CODE: PASS',
+    this.comfortLabel = 'COMFORT: Optimal',
+    this.comfortDetails = const [],
   });
 }
 
@@ -86,17 +92,27 @@ class StairMath {
       return _buildErrorResult(totalRise, 'Total rise must be greater than zero');
     }
 
-    // 1. Calculate number of risers targeting ~7" comfortable riser
-    // Target riser: 7.0 inches
-    int risers = (riseInches / 7.0).round();
-    if (risers < 1) risers = 1;
+    int risers;
+    double calculatedRiserHeight;
 
-    double calculatedRiserHeight = riseInches / risers;
-
-    // If initial calculation exceeds max riser limit, increment risers
-    while (calculatedRiserHeight > maxRiserLimit && risers < 50) {
-      risers++;
+    if (mode == StairSolveMode.fixedTotalRun) {
+      // Constrained Space Mode: maximize riser height up to code limit (7.75") to minimize horizontal footprint
+      risers = (riseInches / maxRiserLimit).ceil();
+      if (risers < 1) risers = 1;
       calculatedRiserHeight = riseInches / risers;
+      while (calculatedRiserHeight > maxRiserLimit && risers < 50) {
+        risers++;
+        calculatedRiserHeight = riseInches / risers;
+      }
+    } else {
+      // Comfort Mode: target standard comfortable ~7.0" riser height
+      risers = (riseInches / 7.0).round();
+      if (risers < 1) risers = 1;
+      calculatedRiserHeight = riseInches / risers;
+      while (calculatedRiserHeight > maxRiserLimit && risers < 50) {
+        risers++;
+        calculatedRiserHeight = riseInches / risers;
+      }
     }
 
     final int treads = risers - 1;
@@ -116,7 +132,7 @@ class StairMath {
     final angleRads = totalRunInches > 0 ? math.atan(riseInches / totalRunInches) : 0.0;
     final angleDeg = angleRads * (180.0 / math.pi);
 
-    // 3. IRC 2024 Code Evaluation
+    // 3. IRC 2024 Code & Comfort Evaluation
     final codeReport = _evaluateIrcCode(
       riserHeight: calculatedRiserHeight,
       treadDepth: calculatedTreadDepth,
@@ -143,35 +159,43 @@ class StairMath {
     required double maxRiserLimit,
     required double minTreadLimit,
   }) {
-    final List<String> details = [];
+    final List<String> codeViolations = [];
+    final List<String> comfortNotes = [];
     bool isRiserOk = true;
     bool isTreadOk = true;
 
     if (riserHeight > maxRiserLimit) {
       isRiserOk = false;
-      details.add('Riser height (${Length.fromInches(riserHeight).toInchesFraction()}) exceeds IRC maximum of ${Length.fromInches(maxRiserLimit).toInchesFraction()}');
+      codeViolations.add('Riser height (${Length.fromInches(riserHeight).toInchesFraction()}) exceeds IRC maximum of ${Length.fromInches(maxRiserLimit).toInchesFraction()}');
     }
 
     if (treadDepth < minTreadLimit) {
       isTreadOk = false;
-      details.add('Tread depth (${Length.fromInches(treadDepth).toInchesFraction()}) is less than IRC minimum of ${Length.fromInches(minTreadLimit).toInchesFraction()}');
+      codeViolations.add('Tread depth (${Length.fromInches(treadDepth).toInchesFraction()}) is less than IRC minimum of ${Length.fromInches(minTreadLimit).toInchesFraction()}');
     }
 
-    // Blondel's Rule of Comfort: 2R + T = 24" - 25"
+    // Blondel's Rule of Comfort: 2R + T = 24" - 25.5"
     final blondelSum = (2 * riserHeight) + treadDepth;
     final isComfortOk = blondelSum >= 24.0 && blondelSum <= 25.5;
-    if (!isComfortOk && isRiserOk && isTreadOk) {
-      details.add('Comfort rule (2R + T = ${blondelSum.toStringAsFixed(1)}") is outside ideal range (24" - 25.5")');
+    if (isComfortOk) {
+      comfortNotes.add('Ideal stride ratio: 2R + T = ${blondelSum.toStringAsFixed(1)}" (Preferred range: 24" - 25.5")');
+    } else {
+      comfortNotes.add('Stride ratio: 2R + T = ${blondelSum.toStringAsFixed(1)}" (Preferred comfort range: 24" - 25.5")');
     }
 
-    final hasErrors = !isRiserOk || !isTreadOk;
+    final isCodePass = isRiserOk && isTreadOk;
     return StairCodeReport(
-      status: hasErrors ? StairCodeStatus.warning : StairCodeStatus.pass,
+      status: isCodePass ? StairCodeStatus.pass : StairCodeStatus.warning,
       ruleReference: 'IRC 2024 §R311.7 (Stairways)',
-      details: details.isEmpty ? ['Configuration satisfies standard IRC residential code requirements.'] : details,
+      details: isCodePass
+          ? ['Riser & tread dimensions satisfy standard residential IRC code limits.']
+          : codeViolations,
       isRiserCompliant: isRiserOk,
       isTreadCompliant: isTreadOk,
       isComfortCompliant: isComfortOk,
+      codeLabel: isCodePass ? 'CODE: PASS' : 'CODE: WARNING',
+      comfortLabel: isComfortOk ? 'COMFORT: Optimal' : 'COMFORT: Slightly outside preferred range',
+      comfortDetails: comfortNotes,
     );
   }
 
@@ -192,6 +216,8 @@ class StairMath {
         isRiserCompliant: false,
         isTreadCompliant: false,
         isComfortCompliant: false,
+        codeLabel: 'CODE: ERROR',
+        comfortLabel: 'COMFORT: Invalid',
       ),
     );
   }

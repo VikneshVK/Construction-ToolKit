@@ -105,7 +105,7 @@ class _BuildCalcRoofDiagramState extends State<BuildCalcRoofDiagram> with Single
         );
       case RoofMeasurementMode.run:
         return _ModeExplanation(
-          title: 'HORIZONTAL RUN',
+          title: 'COMMON RAFTER RUN',
           valueText: _formatValue(RoofMeasurementMode.run),
           description: 'Horizontal distance from the ridge plumb reference to the wall reference.',
         );
@@ -119,7 +119,7 @@ class _BuildCalcRoofDiagramState extends State<BuildCalcRoofDiagram> with Single
         return _ModeExplanation(
           title: 'RAFTER LENGTH',
           valueText: _formatValue(RoofMeasurementMode.rafterLength),
-          description: 'True sloped line length of the common rafter from ridge peak to wall plate.',
+          description: 'Calculated sloped length from the ridge plumb reference to the wall reference.',
         );
     }
   }
@@ -542,7 +542,7 @@ class _RoofBlueprintPainter extends CustomPainter {
         size: size,
         start: Offset(pWallLeft.dx, dimY),
         end: Offset(pRidge.dx, dimY),
-        label: 'RUN: $runValStr',
+        label: 'COMMON RAFTER RUN: $runValStr',
         isActive: true,
         pulseFactor: pulseFactor,
       );
@@ -556,7 +556,7 @@ class _RoofBlueprintPainter extends CustomPainter {
         size: size,
         start: Offset(pEavesLeft.dx, dimY),
         end: Offset(pWallLeft.dx, dimY),
-        label: 'OVERHANG: $overValStr',
+        label: 'EAVE OVERHANG: $overValStr',
         isActive: true,
         pulseFactor: pulseFactor,
       );
@@ -586,7 +586,7 @@ class _RoofBlueprintPainter extends CustomPainter {
         size: size,
         start: pWallLeft,
         end: pRidge,
-        label: 'RAFTER: $rafterValStr',
+        label: 'RAFTER LENGTH: $rafterValStr',
         pulseFactor: pulseFactor,
       );
     }

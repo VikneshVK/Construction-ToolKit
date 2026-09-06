@@ -28,15 +28,15 @@ void main() {
 
     // Verify Beginner Friendly Output
     expect(find.text('STAIR STEPS SUMMARY'), findsOneWidget);
-    expect(find.text('14 Steps Needed'), findsOneWidget);
+    expect(find.text('14 RISERS'), findsOneWidget);
 
     // Verify Trade Details progressive disclosure is collapsed initially
     expect(find.byType(TradeDetailsExpansion), findsOneWidget);
-    expect(find.text('Show Stringer Wood Cut Details & Code Check'), findsOneWidget);
+    expect(find.text('Stringer & Code Details'), findsOneWidget);
     expect(find.text('Show'), findsOneWidget);
 
     // Expand trade details
-    await tester.tap(find.text('Show Stringer Wood Cut Details & Code Check'));
+    await tester.tap(find.text('Stringer & Code Details'));
     await tester.pumpAndSettle();
     expect(find.text('Hide'), findsOneWidget);
     expect(find.text('Diagonal Stringer Board Length'), findsOneWidget);
@@ -102,5 +102,19 @@ void main() {
     await tester.tap(find.textContaining('Height').first);
     await tester.pumpAndSettle();
     expect(find.text('Wall Height (H)'), findsOneWidget);
+
+    // 6. Switch to Trench Footing sub-tab in Concrete and verify Trench Footing Guide
+    await tester.tap(find.text('Trench\nFooting'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Trench Footing Guide'), findsOneWidget);
+    expect(find.text('Trench Length (L)'), findsOneWidget);
+
+    // 7. Switch to Column sub-tab in Concrete and verify Round Column Guide
+    await tester.tap(find.text('Column'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Round Column Guide'), findsOneWidget);
+    expect(find.text('Column Diameter (D)'), findsOneWidget);
   });
 }

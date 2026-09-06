@@ -323,19 +323,32 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
           return const _DimensionInfo(
             title: 'Wall Length (L)',
             shortLabel: 'Length',
-            measuringTip: 'Total horizontal continuous length of the poured concrete foundation wall.',
+            measuringTip: 'Horizontal length of the concrete wall.',
+          );
+        } else if (widget.type == MeasurementGuideType.footing) {
+          return const _DimensionInfo(
+            title: 'Trench Length (L)',
+            shortLabel: 'Length',
+            measuringTip: 'Total continuous length along the footing trench.',
           );
         }
         return const _DimensionInfo(
           title: 'Length (L)',
           shortLabel: 'Length',
-          measuringTip: 'Measure along the longest side of your form boards from corner to corner.',
+          measuringTip: 'Slab length measured end to end.',
         );
       case 'width':
+        if (widget.type == MeasurementGuideType.footing) {
+          return const _DimensionInfo(
+            title: 'Trench Width (W)',
+            shortLabel: 'Width',
+            measuringTip: 'Trench width measured across the excavation.',
+          );
+        }
         return const _DimensionInfo(
           title: 'Width (W)',
           shortLabel: 'Width',
-          measuringTip: 'Measure across the shorter side perpendicular to length between form boards.',
+          measuringTip: 'Slab width measured perpendicular to the length.',
         );
       case 'thickness':
       case 'depth':
@@ -343,26 +356,38 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
           return const _DimensionInfo(
             title: 'Wall Thickness (T)',
             shortLabel: 'Thickness',
-            measuringTip: 'Horizontal thickness between form boards (typically 8" to 10" for foundations, 20-25 cm).',
+            measuringTip: 'Depth of the wall from front to back.',
+          );
+        } else if (widget.type == MeasurementGuideType.footing) {
+          return const _DimensionInfo(
+            title: 'Footing Depth (D)',
+            shortLabel: 'Depth',
+            measuringTip: 'Vertical depth of the concrete footing.',
           );
         }
         return const _DimensionInfo(
           title: 'Thickness (Depth)',
           shortLabel: 'Thickness',
-          measuringTip: 'Vertical pour thickness from compacted gravel subbase to top of form boards (e.g. 4" patio, 6" driveway).',
+          measuringTip: 'Vertical depth of the slab.',
         );
       case 'diameter':
         return const _DimensionInfo(
-          title: 'Tube Diameter (D)',
+          title: 'Column Diameter (D)',
           shortLabel: 'Diameter',
-          measuringTip: 'Inside diameter of sonotube or auger hole across the center.',
+          measuringTip: 'Diameter of the round concrete column.',
         );
       case 'height':
         if (widget.type == MeasurementGuideType.wall) {
           return const _DimensionInfo(
             title: 'Wall Height (H)',
             shortLabel: 'Height',
-            measuringTip: 'Vertical height from top of footing to the top of the wall form.',
+            measuringTip: 'Vertical height of the wall.',
+          );
+        } else if (widget.type == MeasurementGuideType.column) {
+          return const _DimensionInfo(
+            title: 'Column Height (H)',
+            shortLabel: 'Height',
+            measuringTip: 'Vertical height of the round concrete column.',
           );
         }
         return const _DimensionInfo(
@@ -378,16 +403,16 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
         );
       case 'tread':
         return const _DimensionInfo(
-          title: 'Step Depth (Tread)',
-          shortLabel: 'Step Tread',
+          title: 'Tread Depth (T)',
+          shortLabel: 'Tread Depth',
           measuringTip: 'Horizontal walking surface depth where your foot lands on each step (10" is standard).',
         );
       case 'run':
         if (widget.type == MeasurementGuideType.roof) {
           return const _DimensionInfo(
-            title: 'Horizontal Run (Half-Span)',
+            title: 'Common Rafter Run (Run)',
             shortLabel: 'Roof Run',
-            measuringTip: 'Horizontal distance from outside edge of exterior wall to the center roof ridge.',
+            measuringTip: 'Horizontal distance from the ridge plumb reference to the wall reference.',
           );
         }
         return const _DimensionInfo(
@@ -403,9 +428,9 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
         );
       case 'overhang':
         return const _DimensionInfo(
-          title: 'Eaves Overhang',
+          title: 'Eave Overhang',
           shortLabel: 'Overhang',
-          measuringTip: 'Horizontal distance rafters extend past the exterior wall to protect siding from rain.',
+          measuringTip: 'Horizontal projection of the roof rafter beyond the exterior wall line.',
         );
       case 'walllength':
         return const _DimensionInfo(
@@ -461,8 +486,10 @@ class _DynamicGuidePainter extends CustomPainter {
 
     switch (type) {
       case MeasurementGuideType.slab:
-      case MeasurementGuideType.footing:
         _paintIsometricSlab(canvas, size);
+        break;
+      case MeasurementGuideType.footing:
+        _paintFooting(canvas, size);
         break;
       case MeasurementGuideType.wall:
         _paintConcreteWall(canvas, size);
@@ -501,15 +528,16 @@ class _DynamicGuidePainter extends CustomPainter {
     final isWidthActive = activeDimension.toLowerCase() == 'width';
     final isThicknessActive = activeDimension.toLowerCase() == 'thickness' || activeDimension.toLowerCase() == 'depth';
 
-    final center = Offset(size.width * 0.54, size.height * 0.35);
+    // Position slab with comfortable room on left for horizontal depth badge
+    final center = Offset(size.width * 0.54, size.height * 0.40);
 
     // 4 Top Face Vertices (Isometric Diamond)
-    final pLeft = Offset(center.dx - 82, center.dy);
-    final pTop = Offset(center.dx, center.dy - 30);
-    final pRight = Offset(center.dx + 82, center.dy);
-    final pBottom = Offset(center.dx, center.dy + 30);
+    final pLeft = Offset(center.dx - 68, center.dy);
+    final pTop = Offset(center.dx, center.dy - 26);
+    final pRight = Offset(center.dx + 68, center.dy);
+    final pBottom = Offset(center.dx, center.dy + 26);
 
-    final slabThickness = 22.0;
+    const slabThickness = 18.0;
 
     // 4 Bottom Face Vertices
     final bLeft = Offset(pLeft.dx, pLeft.dy + slabThickness);
@@ -535,6 +563,16 @@ class _DynamicGuidePainter extends CustomPainter {
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
     canvas.drawPath(topPath, outlinePaint);
+
+    // Control joint scoring line (realistic slab surface texture)
+    final jointPaint = Paint()
+      ..color = const Color(0xFF334155).withValues(alpha: 0.6)
+      ..strokeWidth = 0.8;
+    canvas.drawLine(
+      Offset.lerp(pTop, pBottom, 0.5)!,
+      Offset.lerp(pLeft, pRight, 0.5)!,
+      jointPaint,
+    );
 
     // 2. Left Front Face (Length edge extrusion)
     final leftFace = Path()
@@ -582,6 +620,7 @@ class _DynamicGuidePainter extends CustomPainter {
       pulseFactor: pulseFactor,
       perpendicularOffset: 20.0,
       rotateParallel: true,
+      canvasSize: size,
     );
 
     // B. WIDTH DIMENSION LINE (parallel along front-right bottom edge with gap)
@@ -596,19 +635,192 @@ class _DynamicGuidePainter extends CustomPainter {
       pulseFactor: pulseFactor,
       perpendicularOffset: 20.0,
       rotateParallel: true,
+      canvasSize: size,
     );
 
-    // C. THICKNESS / DEPTH DIMENSION LINE (along left vertical edge with gap)
+    // C. THICKNESS / DEPTH DIMENSION LINE (along left vertical edge - horizontal badge with clean gap to the left)
     final thickVal = values['thickness'] ?? values['depth'] ?? '';
     final thickLabel = thickVal.isNotEmpty ? 'Depth: $thickVal' : 'THICKNESS';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(pLeft.dx - 10, pLeft.dy),
-      end: Offset(bLeft.dx - 10, bLeft.dy),
+      start: Offset(bLeft.dx - 8, bLeft.dy),
+      end: Offset(bLeft.dx - 8, pLeft.dy),
       label: thickLabel,
       isActive: isThicknessActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(-46, 0),
+      labelOffset: const Offset(-8, 0),
+      rotateParallel: false,
+      canvasSize: size,
+    );
+  }
+
+  void _paintFooting(Canvas canvas, Size size) {
+    final isLengthActive = activeDimension.toLowerCase() == 'length';
+    final isWidthActive = activeDimension.toLowerCase() == 'width';
+    final isDepthActive = activeDimension.toLowerCase() == 'depth' || activeDimension.toLowerCase() == 'thickness';
+
+    final center = Offset(size.width * 0.52, size.height * 0.48);
+    final trenchL = math.min(size.width * 0.42, 150.0);
+    const trenchH = 42.0;
+    const isoX = 30.0;
+    const isoY = 15.0;
+
+    // 3D Isometric Trench Footing Vertices
+    // Front Face (Length x Depth)
+    final pTopLeft = Offset(center.dx - trenchL * 0.5, center.dy - trenchH * 0.5 + isoY * 0.5);
+    final pTopRight = Offset(center.dx + trenchL * 0.5, pTopLeft.dy);
+    final pBottomLeft = Offset(pTopLeft.dx, pTopLeft.dy + trenchH);
+    final pBottomRight = Offset(pTopRight.dx, pBottomLeft.dy);
+
+    // Top Face (Length x Width)
+    final pTopLeftBack = Offset(pTopLeft.dx + isoX, pTopLeft.dy - isoY);
+    final pTopRightBack = Offset(pTopRight.dx + isoX, pTopRight.dy - isoY);
+
+    // Right End Face (Width x Depth)
+    final pBottomRightBack = Offset(pBottomRight.dx + isoX, pBottomRight.dy - isoY);
+
+    // Ground Surface Level (Grade lines extending across top cutaway)
+    const earthDepth = 14.0;
+    final groundY = pTopLeftBack.dy - earthDepth;
+    final groundLeft = Offset(pTopLeft.dx - 22, groundY);
+    final groundRight = Offset(pTopRightBack.dx + 22, groundY);
+
+    // Ground Surface Line
+    final groundPaint = Paint()
+      ..color = const Color(0xFF64748B).withValues(alpha: 0.65)
+      ..strokeWidth = 1.2;
+    canvas.drawLine(groundLeft, Offset(pTopLeft.dx, groundY), groundPaint);
+    canvas.drawLine(Offset(pTopRightBack.dx, groundY), groundRight, groundPaint);
+
+    // Trench cutaway side walls (dropping from ground surface to footing top)
+    final earthWallPaint = Paint()
+      ..color = const Color(0xFF334155).withValues(alpha: 0.75)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(Offset(pTopLeft.dx, groundY), pTopLeft, earthWallPaint);
+    canvas.drawLine(Offset(pTopRightBack.dx, groundY), pTopRightBack, earthWallPaint);
+
+    // Soil Hatch Marks along ground surface
+    final soilHatch = Paint()
+      ..color = const Color(0xFF475569).withValues(alpha: 0.5)
+      ..strokeWidth = 1.0;
+    for (double x = groundLeft.dx; x < pTopLeft.dx - 4; x += 7) {
+      canvas.drawLine(Offset(x, groundY), Offset(x - 5, groundY - 6), soilHatch);
+    }
+    for (double x = pTopRightBack.dx + 4; x < groundRight.dx; x += 7) {
+      canvas.drawLine(Offset(x, groundY), Offset(x + 5, groundY - 6), soilHatch);
+    }
+
+    // "GROUND LEVEL" blueprint annotation
+    final gradeSpan = TextSpan(
+      text: 'GROUND LEVEL',
+      style: TextStyle(
+        color: const Color(0xFF64748B).withValues(alpha: 0.8),
+        fontSize: 8.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+      ),
+    );
+    final gradePainter = TextPainter(text: gradeSpan, textDirection: TextDirection.ltr)..layout();
+    gradePainter.paint(canvas, Offset(groundLeft.dx, groundY - 14));
+
+    // 1. Top Face Fill & Outline (Length x Width)
+    final topFace = Path()
+      ..moveTo(pTopLeft.dx, pTopLeft.dy)
+      ..lineTo(pTopRight.dx, pTopRight.dy)
+      ..lineTo(pTopRightBack.dx, pTopRightBack.dy)
+      ..lineTo(pTopLeftBack.dx, pTopLeftBack.dy)
+      ..close();
+
+    final topFacePaint = Paint()
+      ..color = isWidthActive
+          ? AppColors.brandGold.withValues(alpha: 0.25 + 0.1 * pulseFactor)
+          : const Color(0xFF232F3E)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(topFace, topFacePaint);
+
+    final outlinePaint = Paint()
+      ..color = const Color(0xFF475569)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(topFace, outlinePaint);
+
+    // 2. Right End Face (Width x Depth)
+    final rightFace = Path()
+      ..moveTo(pTopRight.dx, pTopRight.dy)
+      ..lineTo(pTopRightBack.dx, pTopRightBack.dy)
+      ..lineTo(pBottomRightBack.dx, pBottomRightBack.dy)
+      ..lineTo(pBottomRight.dx, pBottomRight.dy)
+      ..close();
+
+    final rightFacePaint = Paint()
+      ..color = isWidthActive || isDepthActive
+          ? AppColors.brandGold.withValues(alpha: 0.18 + 0.08 * pulseFactor)
+          : const Color(0xFF141C28)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(rightFace, rightFacePaint);
+    canvas.drawPath(rightFace, outlinePaint);
+
+    // 3. Front Face (Length x Depth)
+    final frontFace = Path()
+      ..moveTo(pTopLeft.dx, pTopLeft.dy)
+      ..lineTo(pTopRight.dx, pTopRight.dy)
+      ..lineTo(pBottomRight.dx, pBottomRight.dy)
+      ..lineTo(pBottomLeft.dx, pBottomLeft.dy)
+      ..close();
+
+    final frontFacePaint = Paint()
+      ..color = isLengthActive || isDepthActive
+          ? AppColors.brandGold.withValues(alpha: 0.20 + 0.1 * pulseFactor)
+          : const Color(0xFF1A2332)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(frontFace, frontFacePaint);
+    canvas.drawPath(frontFace, outlinePaint);
+
+    // --- Dynamic Dimension Arrows & Labels ---
+
+    // A. TRENCH LENGTH (along bottom front edge - parallel with gap)
+    final lenVal = values['length'] ?? '';
+    final lenLabel = lenVal.isNotEmpty ? 'Length: $lenVal' : 'LENGTH';
+    _paintDimensionLine(
+      canvas: canvas,
+      start: Offset(pBottomLeft.dx, pBottomLeft.dy + 14),
+      end: Offset(pBottomRight.dx, pBottomRight.dy + 14),
+      label: lenLabel,
+      isActive: isLengthActive,
+      pulseFactor: pulseFactor,
+      perpendicularOffset: 14.0,
+      rotateParallel: true,
+      canvasSize: size,
+    );
+
+    // B. FOOTING DEPTH (along left vertical edge - horizontal badge with clean gap to the left)
+    final dVal = values['depth'] ?? values['thickness'] ?? '';
+    final dLabel = dVal.isNotEmpty ? 'Depth: $dVal' : 'DEPTH';
+    _paintDimensionLine(
+      canvas: canvas,
+      start: Offset(pBottomLeft.dx - 8, pBottomLeft.dy),
+      end: Offset(pBottomLeft.dx - 8, pTopLeft.dy),
+      label: dLabel,
+      isActive: isDepthActive,
+      pulseFactor: pulseFactor,
+      labelOffset: const Offset(-8, 0),
+      rotateParallel: false,
+      canvasSize: size,
+    );
+
+    // C. TRENCH WIDTH (across top width edge - parallel slanted with gap)
+    final wVal = values['width'] ?? '';
+    final wLabel = wVal.isNotEmpty ? 'Width: $wVal' : 'WIDTH';
+    _paintDimensionLine(
+      canvas: canvas,
+      start: Offset(pTopRight.dx + 4, pTopRight.dy - 6),
+      end: Offset(pTopRightBack.dx + 4, pTopRightBack.dy - 6),
+      label: wLabel,
+      isActive: isWidthActive,
+      pulseFactor: pulseFactor,
+      perpendicularOffset: -18.0,
+      rotateParallel: true,
+      canvasSize: size,
     );
   }
 
@@ -617,10 +829,10 @@ class _DynamicGuidePainter extends CustomPainter {
     final isHeightActive = activeDimension.toLowerCase() == 'height';
     final isThicknessActive = activeDimension.toLowerCase() == 'thickness' || activeDimension.toLowerCase() == 'depth';
 
-    // Position wall comfortably within the canvas
-    final center = Offset(size.width * 0.46, size.height * 0.50);
-    final wallW = math.min(size.width * 0.44, 160.0);
-    final wallH = 68.0;
+    // Position wall comfortably within the canvas with space for horizontal height badge on the left
+    final center = Offset(size.width * 0.52, size.height * 0.50);
+    final wallW = math.min(size.width * 0.42, 145.0);
+    const wallH = 68.0;
     const thickDepthX = 28.0;
     const thickDepthY = 14.0;
 
@@ -691,23 +903,17 @@ class _DynamicGuidePainter extends CustomPainter {
     canvas.drawPath(frontFace, frontFacePaint);
     canvas.drawPath(frontFace, outlinePaint);
 
-    // Subtle formwork panel seams and snap-tie dots (realistic poured concrete wall look)
+    // Formwork panel seams
     final seamPaint = Paint()
       ..color = const Color(0xFF334155)
       ..strokeWidth = 0.8
       ..style = PaintingStyle.stroke;
-    final tiePaint = Paint()
-      ..color = const Color(0xFF475569)
-      ..style = PaintingStyle.fill;
 
-    // Vertical panel seams
     const seamCount = 3;
     final seamW = wallW / (seamCount + 1);
     for (int i = 1; i <= seamCount; i++) {
       final sx = pTopLeft.dx + i * seamW;
       canvas.drawLine(Offset(sx, pTopLeft.dy), Offset(sx, pBottomLeft.dy), seamPaint);
-      canvas.drawCircle(Offset(sx, pTopLeft.dy + wallH * 0.3), 1.6, tiePaint);
-      canvas.drawCircle(Offset(sx, pTopLeft.dy + wallH * 0.7), 1.6, tiePaint);
     }
 
     // Footing guide line below the wall
@@ -722,7 +928,7 @@ class _DynamicGuidePainter extends CustomPainter {
 
     // --- Dynamic Dimension Arrows & Labels ---
 
-    // A. LENGTH DIMENSION LINE (along front bottom edge)
+    // A. LENGTH DIMENSION LINE (along bottom front edge - parallel with gap)
     final lenVal = values['length'] ?? '';
     final lenLabel = lenVal.isNotEmpty ? 'Length: $lenVal' : 'WALL LENGTH';
     _paintDimensionLine(
@@ -732,11 +938,12 @@ class _DynamicGuidePainter extends CustomPainter {
       label: lenLabel,
       isActive: isLengthActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 6),
+      perpendicularOffset: 14.0,
+      rotateParallel: true,
       canvasSize: size,
     );
 
-    // B. HEIGHT DIMENSION LINE (along left vertical edge with gap)
+    // B. HEIGHT DIMENSION LINE (along left vertical edge - horizontal label perpendicular to line)
     final hVal = values['height'] ?? '';
     final hLabel = hVal.isNotEmpty ? 'Height: $hVal' : 'WALL HEIGHT';
     _paintDimensionLine(
@@ -746,21 +953,36 @@ class _DynamicGuidePainter extends CustomPainter {
       label: hLabel,
       isActive: isHeightActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(-8, 0),
+      perpendicularOffset: -12.0,
+      rotateParallel: false,
       canvasSize: size,
     );
 
-    // C. THICKNESS DIMENSION LINE (across top thickness edge)
+    // C. THICKNESS DIMENSION LINE (anchored directly to front and back wall faces with witness reference lines)
+    const thickOffset = Offset(6.0, -11.0);
+    final dimThickStart = pTopRight + thickOffset;
+    final dimThickEnd = pTopRightBack + thickOffset;
+
+    // Witness / extension reference lines anchoring to the front and back wall faces
+    final refPaint = Paint()
+      ..color = isThicknessActive
+          ? AppColors.brandGold.withValues(alpha: 0.55 + 0.15 * pulseFactor)
+          : const Color(0xFF475569)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(pTopRight, dimThickStart + const Offset(1.5, -2.5), refPaint);
+    canvas.drawLine(pTopRightBack, dimThickEnd + const Offset(1.5, -2.5), refPaint);
+
     final thickVal = values['thickness'] ?? '';
     final thickLabel = thickVal.isNotEmpty ? 'Thickness: $thickVal' : 'THICKNESS';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(pTopRight.dx + 4, pTopRight.dy - 6),
-      end: Offset(pTopRightBack.dx + 4, pTopRightBack.dy - 6),
+      start: dimThickStart,
+      end: dimThickEnd,
       label: thickLabel,
       isActive: isThicknessActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(8, -10),
+      perpendicularOffset: -14.0,
+      rotateParallel: true,
       canvasSize: size,
     );
   }
@@ -769,13 +991,13 @@ class _DynamicGuidePainter extends CustomPainter {
     final isDiaActive = activeDimension.toLowerCase() == 'diameter';
     final isHeightActive = activeDimension.toLowerCase() == 'height';
 
-    final center = Offset(size.width * 0.5, size.height * 0.50);
-    final radiusX = 52.0;
-    final radiusY = 16.0;
-    final height = 78.0;
+    final center = Offset(size.width * 0.48, size.height * 0.50);
+    const radiusX = 42.0;
+    const radiusY = 13.0;
+    const height = 90.0;
 
-    final topCenter = Offset(center.dx, center.dy - height * 0.45);
-    final bottomCenter = Offset(center.dx, center.dy + height * 0.45);
+    final topCenter = Offset(center.dx, center.dy - height * 0.50);
+    final bottomCenter = Offset(center.dx, center.dy + height * 0.50);
 
     // Cylinder Body Fill
     final bodyPath = Path()
@@ -787,16 +1009,29 @@ class _DynamicGuidePainter extends CustomPainter {
       ..close();
 
     final bodyPaint = Paint()
-      ..color = const Color(0xFF1E293B).withValues(alpha: 0.8)
+      ..color = (isHeightActive)
+          ? AppColors.brandGold.withValues(alpha: 0.15 + 0.08 * pulseFactor)
+          : const Color(0xFF1E293B).withValues(alpha: 0.85)
       ..style = PaintingStyle.fill;
     canvas.drawPath(bodyPath, bodyPaint);
+
+    // Form seam rings (Sonotube column texture)
+    final seamPaint = Paint()
+      ..color = const Color(0xFF334155).withValues(alpha: 0.5)
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+    for (double f = 0.25; f <= 0.75; f += 0.25) {
+      final y = topCenter.dy + (bottomCenter.dy - topCenter.dy) * f;
+      final seamRect = Rect.fromCenter(center: Offset(center.dx, y), width: radiusX * 2, height: radiusY * 2);
+      canvas.drawArc(seamRect, 0, 3.14159, false, seamPaint);
+    }
 
     // Top Cap Fill
     final capRect = Rect.fromCenter(center: topCenter, width: radiusX * 2, height: radiusY * 2);
     final capPaint = Paint()
       ..color = isDiaActive
-          ? AppColors.brandGold.withValues(alpha: 0.2 + 0.1 * pulseFactor)
-          : const Color(0xFF334155)
+          ? AppColors.brandGold.withValues(alpha: 0.25 + 0.1 * pulseFactor)
+          : const Color(0xFF263345)
       ..style = PaintingStyle.fill;
     canvas.drawOval(capRect, capPaint);
     canvas.drawOval(capRect, Paint()..color = const Color(0xFF475569)..style = PaintingStyle.stroke..strokeWidth = 1.0);
@@ -805,30 +1040,35 @@ class _DynamicGuidePainter extends CustomPainter {
     final outlinePaint = Paint()..color = const Color(0xFF475569)..style = PaintingStyle.stroke..strokeWidth = 1.0;
     canvas.drawLine(Offset(topCenter.dx - radiusX, topCenter.dy), Offset(bottomCenter.dx - radiusX, bottomCenter.dy), outlinePaint);
     canvas.drawLine(Offset(topCenter.dx + radiusX, topCenter.dy), Offset(bottomCenter.dx + radiusX, bottomCenter.dy), outlinePaint);
+    canvas.drawArc(Rect.fromCenter(center: bottomCenter, width: radiusX * 2, height: radiusY * 2), 0, 3.14159, false, outlinePaint);
 
-    // Diameter Dimension Line
+    // Diameter Dimension Line (across top rim of column, with parallel horizontal badge floating above)
     final diaVal = values['diameter'] ?? '';
+    final diaLabel = diaVal.isNotEmpty ? 'Diameter: $diaVal' : 'DIAMETER';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(topCenter.dx - radiusX, topCenter.dy - 14),
-      end: Offset(topCenter.dx + radiusX, topCenter.dy - 14),
-      label: diaVal.isNotEmpty ? 'Diameter: $diaVal' : 'DIAMETER',
+      start: Offset(topCenter.dx - radiusX, topCenter.dy),
+      end: Offset(topCenter.dx + radiusX, topCenter.dy),
+      label: diaLabel,
       isActive: isDiaActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, -12),
+      perpendicularOffset: -18.0,
+      rotateParallel: true,
       canvasSize: size,
     );
 
-    // Height Dimension Line
+    // Height Dimension Line (along right vertical side of column, with parallel vertical badge on the right)
     final hVal = values['height'] ?? '';
+    final hLabel = hVal.isNotEmpty ? 'Height: $hVal' : 'HEIGHT';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(topCenter.dx + radiusX + 18, topCenter.dy),
-      end: Offset(bottomCenter.dx + radiusX + 18, bottomCenter.dy),
-      label: hVal.isNotEmpty ? 'Height: $hVal' : 'HEIGHT',
+      start: Offset(topCenter.dx + radiusX + 16, bottomCenter.dy),
+      end: Offset(topCenter.dx + radiusX + 16, topCenter.dy),
+      label: hLabel,
       isActive: isHeightActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(14, 0),
+      perpendicularOffset: 16.0,
+      rotateParallel: true,
       canvasSize: size,
     );
   }
@@ -840,9 +1080,9 @@ class _DynamicGuidePainter extends CustomPainter {
 
     // Positioned with clear top and bottom margins inside the 175px canvas
     final start = Offset(size.width * 0.14, size.height * 0.74);
-    final numSteps = 4;
-    final stepW = 38.0;
-    final stepH = 20.0;
+    const numSteps = 4;
+    const stepW = 38.0;
+    const stepH = 20.0;
 
     final stairPath = Path()..moveTo(start.dx, start.dy);
     double curX = start.dx;
@@ -864,44 +1104,47 @@ class _DynamicGuidePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     canvas.drawPath(stairPath, stairPaint);
 
-    // Total Rise Vertical Dimension Line (Right Side)
+    // Total Rise Vertical Dimension Line (Right Side - bottom to top, parallel vertical badge)
     final riseVal = values['rise'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(curX + 24, start.dy),
-      end: Offset(curX + 24, curY),
-      label: riseVal.isNotEmpty ? 'Rise: $riseVal' : 'TOTAL RISE (HEIGHT)',
+      start: Offset(curX + 22, start.dy),
+      end: Offset(curX + 22, curY),
+      label: riseVal.isNotEmpty ? 'Rise: $riseVal' : 'TOTAL RISE',
       isActive: isRiseActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(12, 0),
+      perpendicularOffset: 16.0,
+      rotateParallel: true,
       canvasSize: size,
     );
 
-    // Single Tread Depth Dimension Line (Top Step)
+    // Single Tread Depth Dimension Line (Top Step - parallel horizontal badge above)
     final treadVal = values['tread'] ?? '';
     final step2X = start.dx + stepW * 2;
     final step2Y = start.dy - stepH * 2;
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(step2X, step2Y - 10),
-      end: Offset(step2X + stepW, step2Y - 10),
-      label: treadVal.isNotEmpty ? 'Tread: $treadVal' : 'STEP TREAD',
+      start: Offset(step2X, step2Y - 8),
+      end: Offset(step2X + stepW, step2Y - 8),
+      label: treadVal.isNotEmpty ? 'Tread: $treadVal' : 'TREAD DEPTH',
       isActive: isTreadActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, -12),
+      perpendicularOffset: -14.0,
+      rotateParallel: true,
       canvasSize: size,
     );
 
-    // Total Run Dimension Line (Bottom Base - fully inside canvas bounds)
+    // Total Run Dimension Line (Bottom Base - parallel horizontal badge below)
     final runVal = values['run'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
       start: Offset(start.dx, start.dy + 12),
       end: Offset(curX, start.dy + 12),
-      label: runVal.isNotEmpty ? 'Run: $runVal' : 'TOTAL RUN (LENGTH)',
+      label: runVal.isNotEmpty ? 'Run: $runVal' : 'TOTAL RUN',
       isActive: isRunActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 12),
+      perpendicularOffset: 14.0,
+      rotateParallel: true,
       canvasSize: size,
     );
   }
@@ -944,7 +1187,7 @@ class _DynamicGuidePainter extends CustomPainter {
     // 3. Shared Horizontal Elevation Baseline for Overhang and Run Dimension Strings
     final dimY = wallLeft.dy + 18.0;
 
-    // A. Overhang Dimension Line (Eaves to Wall)
+    // A. Overhang Dimension Line (Eaves to Wall - parallel horizontal badge below)
     final overhangVal = values['overhang'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
@@ -953,10 +1196,12 @@ class _DynamicGuidePainter extends CustomPainter {
       label: overhangVal.isNotEmpty ? 'Eaves: $overhangVal' : 'OVERHANG',
       isActive: isOverhangActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 14),
+      perpendicularOffset: 14.0,
+      rotateParallel: true,
+      canvasSize: size,
     );
 
-    // B. Horizontal Run Dimension Line (Wall to Center Ridge)
+    // B. Horizontal Run Dimension Line (Wall to Center Ridge - parallel horizontal badge below)
     final runVal = values['run'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
@@ -965,7 +1210,9 @@ class _DynamicGuidePainter extends CustomPainter {
       label: runVal.isNotEmpty ? 'Run: $runVal' : 'RUN (HALF-SPAN)',
       isActive: isRunActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 14),
+      perpendicularOffset: 14.0,
+      rotateParallel: true,
+      canvasSize: size,
     );
 
     // 4. Roof Pitch Slope Triangle (resting above left rafter)
@@ -1030,7 +1277,7 @@ class _DynamicGuidePainter extends CustomPainter {
     // Outer wall outline
     canvas.drawRect(wallRect, wallStroke);
 
-    // Wall Length Line (Top - badge positioned cleanly above line)
+    // Wall Length Line (Top - parallel horizontal badge above)
     final lVal = values['wallLength'] ?? values['length'] ?? '';
     final lLabel = lVal.isNotEmpty ? 'Length: $lVal' : 'WALL LENGTH';
     _paintDimensionLine(
@@ -1040,22 +1287,24 @@ class _DynamicGuidePainter extends CustomPainter {
       label: lLabel,
       isActive: isLenActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, -6),
+      perpendicularOffset: -14.0,
+      rotateParallel: true,
       canvasSize: size,
     );
 
-    // Wall Height Line (Right side - badge positioned cleanly to the RIGHT of the line with gap)
+    // Wall Height Line (Right side - bottom to top, parallel vertical badge on the right)
     final hVal = values['wallHeight'] ?? values['height'] ?? '';
     final hLabel = hVal.isNotEmpty ? 'Height: $hVal' : 'WALL HEIGHT';
     final dimRightX = wallRight + 14.0;
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(dimRightX, wallTop),
-      end: Offset(dimRightX, wallBottom),
+      start: Offset(dimRightX, wallBottom),
+      end: Offset(dimRightX, wallTop),
       label: hLabel,
       isActive: isHeightActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(8, 0),
+      perpendicularOffset: 16.0,
+      rotateParallel: true,
       canvasSize: size,
     );
   }
@@ -1069,7 +1318,7 @@ class _DynamicGuidePainter extends CustomPainter {
     required double pulseFactor,
     Offset labelOffset = Offset.zero,
     double perpendicularOffset = 0.0,
-    bool rotateParallel = false,
+    bool rotateParallel = true,
     Size? canvasSize,
   }) {
     final color = isActive
@@ -1102,7 +1351,7 @@ class _DynamicGuidePainter extends CustomPainter {
       text: label,
       style: TextStyle(
         color: isActive ? AppColors.brandGold : const Color(0xFF94A3B8),
-        fontSize: isActive ? 12.5 : 10.5,
+        fontSize: isActive ? 12.0 : 10.5,
         fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
         letterSpacing: 0.4,
       ),
@@ -1116,38 +1365,47 @@ class _DynamicGuidePainter extends CustomPainter {
     final badgeWidth = textPainter.width + (isActive ? 16 : 10);
     final badgeHeight = textPainter.height + (isActive ? 6 : 4);
 
-    // Calculate midpoint with smart gap offset to ensure badges NEVER intersect measurement lines
-    double midX = (start.dx + end.dx) * 0.5 + perp.dx;
-    double midY = (start.dy + end.dy) * 0.5 + perp.dy;
+    // Calculate midpoint with smart perpendicular and custom label offset
+    double midX = (start.dx + end.dx) * 0.5 + perp.dx + labelOffset.dx;
+    double midY = (start.dy + end.dy) * 0.5 + perp.dy + labelOffset.dy;
 
     final isVertical = (start.dx - end.dx).abs() < 1.0;
-    final isHorizontal = (start.dy - end.dy).abs() < 1.0;
-
-    if (isVertical) {
-      if (labelOffset.dx > 0) {
-        midX = start.dx + labelOffset.dx + badgeWidth * 0.5;
-      } else if (labelOffset.dx < 0) {
-        midX = start.dx + labelOffset.dx - badgeWidth * 0.5;
+    if (isVertical && !rotateParallel) {
+      final gap = labelOffset.dx != 0 ? labelOffset.dx.abs() : (perp.dx != 0 ? perp.dx.abs() : 8.0);
+      if (labelOffset.dx < 0 || perp.dx < 0) {
+        midX = start.dx - badgeWidth * 0.5 - gap;
+      } else if (labelOffset.dx > 0 || perp.dx > 0) {
+        midX = start.dx + badgeWidth * 0.5 + gap;
       }
-      midY += labelOffset.dy;
-    } else if (isHorizontal) {
-      midX += labelOffset.dx;
-      if (labelOffset.dy < 0) {
-        midY = start.dy + labelOffset.dy - badgeHeight * 0.5;
-      } else if (labelOffset.dy > 0) {
-        midY = start.dy + labelOffset.dy + badgeHeight * 0.5;
-      }
-    } else {
-      midX += labelOffset.dx;
-      midY += labelOffset.dy;
+      midY = (start.dy + end.dy) * 0.5 + labelOffset.dy;
     }
 
-    // Hard boundary clamping to guarantee NO clipping on screen edges
-    if (canvasSize != null && !rotateParallel) {
-      midX = midX.clamp(badgeWidth * 0.5 + 6, canvasSize.width - badgeWidth * 0.5 - 6);
+    // Calculate rotation angle (upright or bottom-to-top orientation)
+    double rot = 0.0;
+    if (rotateParallel && len > 0) {
+      rot = math.atan2(dy, dx);
+      if (rot > math.pi / 2) {
+        rot -= math.pi;
+      } else if (rot < -math.pi / 2) {
+        rot += math.pi;
+      }
     }
 
-    final mid = Offset(midX, midY);
+    // Boundary clamping to guarantee NO clipping on any screen edge
+    if (canvasSize != null) {
+      final effectiveHalfW = (badgeWidth * math.cos(rot).abs() + badgeHeight * math.sin(rot).abs()) * 0.5;
+      final effectiveHalfH = (badgeWidth * math.sin(rot).abs() + badgeHeight * math.cos(rot).abs()) * 0.5;
+      final minX = effectiveHalfW + 4;
+      final maxX = canvasSize.width - effectiveHalfW - 4;
+      if (minX <= maxX) {
+        midX = midX.clamp(minX, maxX);
+      }
+      final minY = effectiveHalfH + 4;
+      final maxY = canvasSize.height - effectiveHalfH - 4;
+      if (minY <= maxY) {
+        midY = midY.clamp(minY, maxY);
+      }
+    }
 
     final badgeRect = Rect.fromCenter(
       center: Offset.zero,
@@ -1156,15 +1414,9 @@ class _DynamicGuidePainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.translate(mid.dx, mid.dy);
+    canvas.translate(midX, midY);
 
-    if (rotateParallel) {
-      double rot = math.atan2(dy, dx);
-      if (rot > math.pi / 2) {
-        rot -= math.pi;
-      } else if (rot < -math.pi / 2) {
-        rot += math.pi;
-      }
+    if (rotateParallel && rot != 0.0) {
       canvas.rotate(rot);
     }
 
