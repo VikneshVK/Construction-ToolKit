@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
@@ -468,15 +469,15 @@ class _DynamicGuidePainter extends CustomPainter {
     final isWidthActive = activeDimension.toLowerCase() == 'width';
     final isThicknessActive = activeDimension.toLowerCase() == 'thickness' || activeDimension.toLowerCase() == 'depth';
 
-    final center = Offset(size.width * 0.5, size.height * 0.38);
+    final center = Offset(size.width * 0.52, size.height * 0.38);
 
     // 4 Top Face Vertices (Isometric Diamond)
-    final pLeft = Offset(center.dx - 105, center.dy);
-    final pTop = Offset(center.dx, center.dy - 38);
-    final pRight = Offset(center.dx + 105, center.dy);
-    final pBottom = Offset(center.dx, center.dy + 38);
+    final pLeft = Offset(center.dx - 90, center.dy);
+    final pTop = Offset(center.dx, center.dy - 34);
+    final pRight = Offset(center.dx + 90, center.dy);
+    final pBottom = Offset(center.dx, center.dy + 34);
 
-    final slabThickness = 26.0;
+    final slabThickness = 24.0;
 
     // 4 Bottom Face Vertices
     final bLeft = Offset(pLeft.dx, pLeft.dy + slabThickness);
@@ -537,30 +538,30 @@ class _DynamicGuidePainter extends CustomPainter {
 
     // --- Dynamic Dimension Arrows & Labels ---
 
-    // A. LENGTH DIMENSION LINE (along front-left bottom edge)
+    // A. LENGTH DIMENSION LINE (parallel along front-left bottom edge)
     final lenVal = values['length'] ?? '';
     final lenLabel = lenVal.isNotEmpty ? 'Length: $lenVal' : 'LENGTH';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(bLeft.dx - 8, bLeft.dy + 8),
-      end: Offset(bBottom.dx - 8, bBottom.dy + 8),
+      start: Offset(bLeft.dx - 12, bLeft.dy + 12),
+      end: Offset(bBottom.dx - 12, bBottom.dy + 12),
       label: lenLabel,
       isActive: isLengthActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(-8, 12),
+      rotateParallel: true,
     );
 
-    // B. WIDTH DIMENSION LINE (along front-right bottom edge)
+    // B. WIDTH DIMENSION LINE (parallel along front-right bottom edge)
     final widthVal = values['width'] ?? '';
     final widthLabel = widthVal.isNotEmpty ? 'Width: $widthVal' : 'WIDTH';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(bBottom.dx + 8, bBottom.dy + 8),
-      end: Offset(bRight.dx + 8, bRight.dy + 8),
+      start: Offset(bBottom.dx + 12, bBottom.dy + 12),
+      end: Offset(bRight.dx + 12, bRight.dy + 12),
       label: widthLabel,
       isActive: isWidthActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(8, 12),
+      rotateParallel: true,
     );
 
     // C. THICKNESS / DEPTH DIMENSION LINE (along left vertical edge)
@@ -568,12 +569,12 @@ class _DynamicGuidePainter extends CustomPainter {
     final thickLabel = thickVal.isNotEmpty ? 'Depth: $thickVal' : 'THICKNESS';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(pLeft.dx - 20, pLeft.dy),
-      end: Offset(bLeft.dx - 20, bLeft.dy),
+      start: Offset(pLeft.dx - 16, pLeft.dy),
+      end: Offset(bLeft.dx - 16, bLeft.dy),
       label: thickLabel,
       isActive: isThicknessActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(-28, 0),
+      labelOffset: const Offset(-24, 0),
     );
   }
 
@@ -843,7 +844,8 @@ class _DynamicGuidePainter extends CustomPainter {
     required String label,
     required bool isActive,
     required double pulseFactor,
-    required Offset labelOffset,
+    Offset labelOffset = Offset.zero,
+    bool rotateParallel = false,
   }) {
     final color = isActive
         ? AppColors.brandGold
@@ -862,7 +864,7 @@ class _DynamicGuidePainter extends CustomPainter {
     _drawArrowOrTick(canvas, start, end, linePaint, isActive);
     _drawArrowOrTick(canvas, end, start, linePaint, isActive);
 
-    // Glowing Badge / Text Label at Center
+    // Midpoint
     final mid = Offset((start.dx + end.dx) * 0.5 + labelOffset.dx, (start.dy + end.dy) * 0.5 + labelOffset.dy);
 
     final textSpan = TextSpan(
@@ -881,10 +883,25 @@ class _DynamicGuidePainter extends CustomPainter {
     )..layout();
 
     final badgeRect = Rect.fromCenter(
-      center: mid,
+      center: Offset.zero,
       width: textPainter.width + (isActive ? 18 : 10),
       height: textPainter.height + (isActive ? 8 : 4),
     );
+
+    canvas.save();
+    canvas.translate(mid.dx, mid.dy);
+
+    if (rotateParallel) {
+      final dx = end.dx - start.dx;
+      final dy = end.dy - start.dy;
+      double rot = math.atan2(dy, dx);
+      if (rot > math.pi / 2) {
+        rot -= math.pi;
+      } else if (rot < -math.pi / 2) {
+        rot += math.pi;
+      }
+      canvas.rotate(rot);
+    }
 
     if (isActive) {
       // Outer subtle glow halo
@@ -909,7 +926,9 @@ class _DynamicGuidePainter extends CustomPainter {
     canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(5)), bgBadge);
     canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(5)), borderBadge);
 
-    textPainter.paint(canvas, Offset(mid.dx - textPainter.width * 0.5, mid.dy - textPainter.height * 0.5));
+    textPainter.paint(canvas, Offset(-textPainter.width * 0.5, -textPainter.height * 0.5));
+
+    canvas.restore();
   }
 
   void _drawArrowOrTick(Canvas canvas, Offset p, Offset towards, Paint paint, bool isActive) {
