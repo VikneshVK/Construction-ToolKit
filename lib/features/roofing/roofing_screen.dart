@@ -7,13 +7,10 @@ import '../../core/math/roofing_math.dart';
 import '../../core/components/inputs/buildcalc_input.dart';
 import '../../core/components/display/buildcalc_result_hero.dart';
 import '../../core/components/controls/buildcalc_unit_selector.dart';
-import '../../core/components/blueprint/blueprint_canvas.dart';
-import '../../core/components/blueprint/rafter_blueprint_painter.dart';
 import '../../core/persistence/local_storage.dart';
 import '../../core/components/dialogs/unit_settings_dialog.dart';
 import '../../core/theme/unit_settings.dart';
-
-import '../../core/components/guides/visual_measurement_guide.dart';
+import '../../core/components/guides/build_calc_roof_diagram.dart';
 import '../../core/components/display/trade_details_expansion.dart';
 
 /// Roofing Workflow Screen: Common Rafters, Pitch Slope Trigonometry, True-Cut Jack Rafters.
@@ -38,7 +35,7 @@ class _RoofingScreenState extends State<RoofingScreen> {
   RafterResult? _rafterResult;
   List<JackRafterResult> _jackResults = [];
 
-  String _activeRoofDim = 'run';
+  RoofMeasurementMode _activeRoofMode = RoofMeasurementMode.run;
 
   @override
   void initState() {
@@ -153,38 +150,41 @@ class _RoofingScreenState extends State<RoofingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  VisualMeasurementGuide(
-                    type: MeasurementGuideType.roof,
-                    activeDimension: _activeRoofDim,
-                    values: {
-                      'run': '${_runFeetCtrl.text} ${isMetric ? "m" : "ft"}',
-                      'pitch': _pitchCtrl.text,
-                      'overhang': '${_overhangCtrl.text} ${isMetric ? "cm" : "in"}',
-                    },
-                    onDimensionSelected: (dim) => setState(() => _activeRoofDim = dim),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
+                  // 1. One Unified Interactive Roof Model
+                  if (_rafterResult != null) ...[
+                    BuildCalcRoofDiagram(
+                      pitch: _rafterResult!.pitch,
+                      run: _rafterResult!.totalRun,
+                      rise: _rafterResult!.totalRise,
+                      overhang: _rafterResult!.overhangLength,
+                      rafterLength: _rafterResult!.commonRafterLength,
+                      activeMeasurement: _activeRoofMode,
+                      isMetric: isMetric,
+                      onMeasurementSelected: (mode) => setState(() => _activeRoofMode = mode),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
 
-                  // Quick slope presets
+                  // 2. Quick slope presets
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
                         _buildPresetChip('Gentle Slope (4/12 · 18°)', () {
                           _pitchCtrl.text = '4';
-                          _activeRoofDim = 'pitch';
+                          _activeRoofMode = RoofMeasurementMode.pitch;
                           _recalculate();
                         }),
                         const SizedBox(width: 6),
                         _buildPresetChip('Standard Roof (6/12 · 26°)', () {
                           _pitchCtrl.text = '6';
-                          _activeRoofDim = 'pitch';
+                          _activeRoofMode = RoofMeasurementMode.pitch;
                           _recalculate();
                         }),
                         const SizedBox(width: 6),
                         _buildPresetChip('Steep Gable (8/12 · 34°)', () {
                           _pitchCtrl.text = '8';
-                          _activeRoofDim = 'pitch';
+                          _activeRoofMode = RoofMeasurementMode.pitch;
                           _recalculate();
                         }),
                       ],
@@ -192,6 +192,7 @@ class _RoofingScreenState extends State<RoofingScreen> {
                   ),
                   const SizedBox(height: AppSpacing.md),
 
+                  // 3. Tab Selector
                   BuildCalcTabSelector<int>(
                     items: const [0, 1],
                     selectedItem: _subTabIndex,
@@ -200,63 +201,57 @@ class _RoofingScreenState extends State<RoofingScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  if (_rafterResult != null) ...[
-                    BlueprintCanvas(
-                      painter: RafterBlueprintPainter(result: _rafterResult!),
-                      height: 180,
+                  if (_subTabIndex == 0) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: BuildCalcInput(
+                            label: 'Horizontal Run (Half-Span)',
+                            unit: isMetric ? 'm' : 'ft',
+                            controller: _runFeetCtrl,
+                            infoDescription: 'The horizontal distance from the outside of your exterior wall to the center roof ridge beam.',
+                            infoTip: 'This is half the total building width if you have a centered gable roof.',
+                            infoTradeTerm: 'Horizontal Run (R)',
+                            onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.run),
+                            onFocusChange: (f) {
+                              if (f) setState(() => _activeRoofMode = RoofMeasurementMode.run);
+                            },
+                            onChanged: (_) => _recalculate(),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: BuildCalcInput(
+                            label: 'Roof Slope (Rise / 12)',
+                            unit: 'in/12',
+                            controller: _pitchCtrl,
+                            infoDescription: 'How steep the roof is. A 4/12 pitch rises 4 inches vertically for every 12 inches of horizontal run.',
+                            infoTradeTerm: 'Roof Pitch (Slope)',
+                            onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.pitch),
+                            onFocusChange: (f) {
+                              if (f) setState(() => _activeRoofMode = RoofMeasurementMode.pitch);
+                            },
+                            onChanged: (_) => _recalculate(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    BuildCalcInput(
+                      label: 'Roof Eaves Overhang (Run)',
+                      unit: isMetric ? 'cm' : 'in',
+                      controller: _overhangCtrl,
+                      infoDescription: 'How far the roof extends past the outer wall to keep rain away from siding.',
+                      infoTip: 'Standard overhang is 12" (30 cm).',
+                      infoTradeTerm: 'Eaves Overhang Run',
+                      onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.overhang),
+                      onFocusChange: (f) {
+                        if (f) setState(() => _activeRoofMode = RoofMeasurementMode.overhang);
+                      },
+                      onChanged: (_) => _recalculate(),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                   ],
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: BuildCalcInput(
-                          label: 'Horizontal Run (Half-Span)',
-                          unit: isMetric ? 'm' : 'ft',
-                          controller: _runFeetCtrl,
-                          infoDescription: 'The horizontal distance from the outside of your exterior wall to the center roof ridge beam.',
-                          infoTip: 'This is half the total building width if you have a centered gable roof.',
-                          infoTradeTerm: 'Horizontal Run (R)',
-                          onTap: () => setState(() => _activeRoofDim = 'run'),
-                          onFocusChange: (f) {
-                            if (f) setState(() => _activeRoofDim = 'run');
-                          },
-                          onChanged: (_) => _recalculate(),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: BuildCalcInput(
-                          label: 'Roof Slope (Rise / 12)',
-                          unit: 'in/12',
-                          controller: _pitchCtrl,
-                          infoDescription: 'How steep the roof is. A 4/12 pitch rises 4 inches vertically for every 12 inches of horizontal run.',
-                          infoTradeTerm: 'Roof Pitch (Slope)',
-                          onTap: () => setState(() => _activeRoofDim = 'pitch'),
-                          onFocusChange: (f) {
-                            if (f) setState(() => _activeRoofDim = 'pitch');
-                          },
-                          onChanged: (_) => _recalculate(),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  BuildCalcInput(
-                    label: 'Roof Eaves Overhang (Run)',
-                    unit: isMetric ? 'cm' : 'in',
-                    controller: _overhangCtrl,
-                    infoDescription: 'How far the roof extends past the outer wall to keep rain away from siding.',
-                    infoTip: 'Standard overhang is 12" (30 cm).',
-                    infoTradeTerm: 'Eaves Overhang Run',
-                    onTap: () => setState(() => _activeRoofDim = 'overhang'),
-                    onFocusChange: (f) {
-                      if (f) setState(() => _activeRoofDim = 'overhang');
-                    },
-                    onChanged: (_) => _recalculate(),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
 
                   if (_subTabIndex == 0 && _rafterResult != null) ...[
                     BuildCalcResultHero(
