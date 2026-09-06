@@ -409,27 +409,28 @@ class _RoofBlueprintPainter extends CustomPainter {
     final pitchRise = pitch.riseIn12.clamp(1.0, 24.0);
     final overhangInches = overhang.toInches().clamp(0.0, runInches * 0.5);
 
-    // Centered symmetrical truss
+    // Centered symmetrical truss with safe margins to prevent any edge clipping
     final centerRidgeX = size.width * 0.50;
-    final runVisualW = size.width * 0.30;
+    final rawOverhangW = (overhangInches / runInches) * (size.width * 0.28);
+    final overhangVisualW = rawOverhangW.clamp(38.0, 52.0);
+    // Allow at least 52px margin on left and right borders
+    final sideMargin = math.max(52.0, size.width * 0.12);
+    final runVisualW = centerRidgeX - sideMargin - overhangVisualW;
+
     final wallLeftX = centerRidgeX - runVisualW;
     final wallRightX = centerRidgeX + runVisualW;
+    final eavesLeftX = wallLeftX - overhangVisualW;
+    final eavesRightX = wallRightX + overhangVisualW;
 
     // Visual rise proportional to pitch
     final slopeRatio = (pitchRise / 12.0);
-    final visualRiseH = (runVisualW * slopeRatio * 0.90).clamp(28.0, size.height * 0.44);
+    final visualRiseH = (runVisualW * slopeRatio * 0.88).clamp(28.0, size.height * 0.42);
 
-    final wallPlateY = size.height * 0.60;
+    final wallPlateY = size.height * 0.52;
     final ridgeY = wallPlateY - visualRiseH;
-
-    // Overhang proportional width with minimum 44px for legible layout
-    final rawOverhangW = runVisualW * (overhangInches / runInches);
-    final overhangVisualW = rawOverhangW.clamp(44.0, 75.0);
     final visualSlope = visualRiseH / runVisualW;
 
-    final eavesLeftX = wallLeftX - overhangVisualW;
     final eavesLeftY = wallPlateY + (overhangVisualW * visualSlope);
-    final eavesRightX = wallRightX + overhangVisualW;
     final eavesRightY = eavesLeftY;
 
     final pRidge = Offset(centerRidgeX, ridgeY);
@@ -496,8 +497,8 @@ class _RoofBlueprintPainter extends CustomPainter {
       ..color = const Color(0xFF334155)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-    canvas.drawLine(pWallLeft, Offset(pWallLeft.dx, wallPlateY + 24), studPaint);
-    canvas.drawLine(pWallRight, Offset(pWallRight.dx, wallPlateY + 24), studPaint);
+    canvas.drawLine(pWallLeft, Offset(pWallLeft.dx, wallPlateY + 28), studPaint);
+    canvas.drawLine(pWallRight, Offset(pWallRight.dx, wallPlateY + 28), studPaint);
 
     final tieBeamPaint = Paint()
       ..color = const Color(0xFF2A374A)
@@ -505,7 +506,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     canvas.drawLine(pWallLeft, pWallRight, tieBeamPaint);
 
-    // 4. Draw Inactive Roof Skeleton (STROKE ONLY, NEVER SOLID FILL)
+    // 4. Draw Inactive Roof Skeleton (STROKE ONLY)
     final skeletonPaint = Paint()
       ..color = const Color(0xFF475569)
       ..strokeWidth = 2.0
@@ -519,13 +520,14 @@ class _RoofBlueprintPainter extends CustomPainter {
       ..lineTo(pEavesRight.dx, pEavesRight.dy);
     canvas.drawPath(roofPath, skeletonPaint);
 
-    // 5. Draw Active Dimension Visualizations ONLY
-    final dimY = wallPlateY + 16.0;
+    // 5. Dimension Elevation Baseline Y (Clean vertical gap below wallPlateY)
+    final dimY = wallPlateY + 22.0;
 
     // --- A. PITCH MODE ---
     if (isPitch) {
       _paintPitchIndicator(
         canvas: canvas,
+        size: size,
         rafterStart: pEavesLeft,
         rafterEnd: pRidge,
         isActive: true,
@@ -537,6 +539,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       final runValStr = isMetric ? '${run.toMeters().toStringAsFixed(2)} m' : run.toFeetInchesFraction();
       _paintDimensionLine(
         canvas: canvas,
+        size: size,
         start: Offset(pWallLeft.dx, dimY),
         end: Offset(pRidge.dx, dimY),
         label: 'RUN: $runValStr',
@@ -550,12 +553,12 @@ class _RoofBlueprintPainter extends CustomPainter {
       final overValStr = isMetric ? '${(overhang.toMillimeters() / 10).round()} cm' : overhang.toInchesFraction();
       _paintDimensionLine(
         canvas: canvas,
+        size: size,
         start: Offset(pEavesLeft.dx, dimY),
         end: Offset(pWallLeft.dx, dimY),
         label: 'OVERHANG: $overValStr',
         isActive: true,
         pulseFactor: pulseFactor,
-        labelOffset: const Offset(0, -22),
       );
     }
 
@@ -580,6 +583,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       final rafterValStr = isMetric ? '${rafterLength.toMeters().toStringAsFixed(3)} m' : rafterLength.toFeetInchesFraction();
       _paintSlopedDimension(
         canvas: canvas,
+        size: size,
         start: pWallLeft,
         end: pRidge,
         label: 'RAFTER: $rafterValStr',
@@ -645,6 +649,7 @@ class _RoofBlueprintPainter extends CustomPainter {
 
   void _paintPitchIndicator({
     required Canvas canvas,
+    required Size size,
     required Offset rafterStart,
     required Offset rafterEnd,
     required bool isActive,
@@ -723,19 +728,25 @@ class _RoofBlueprintPainter extends CustomPainter {
       text: 'PITCH: $pitchText',
       style: const TextStyle(
         color: AppColors.brandGold,
-        fontSize: 12.0,
+        fontSize: 11.5,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.4,
       ),
     );
 
     final tp = TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
-    final badgeCenter = Offset(p0.dx + triW * 0.5, p0.dy - 22);
+    final badgeWidth = tp.width + 16;
+    final badgeHeight = tp.height + 6;
+
+    // Clamp badge safely within canvas boundaries
+    final rawCenterX = p0.dx + triW * 0.5;
+    final clampedCenterX = rawCenterX.clamp(badgeWidth * 0.5 + 8, size.width - badgeWidth * 0.5 - 8);
+    final badgeCenter = Offset(clampedCenterX, p0.dy - 20);
 
     final badgeRect = Rect.fromCenter(
       center: badgeCenter,
-      width: tp.width + 16,
-      height: tp.height + 6,
+      width: badgeWidth,
+      height: badgeHeight,
     );
 
     final glowBadge = Paint()
@@ -759,6 +770,7 @@ class _RoofBlueprintPainter extends CustomPainter {
 
   void _paintDimensionLine({
     required Canvas canvas,
+    required Size size,
     required Offset start,
     required Offset end,
     required String label,
@@ -779,23 +791,29 @@ class _RoofBlueprintPainter extends CustomPainter {
     _drawArrowOrTick(canvas, start, end, linePaint, isActive);
     _drawArrowOrTick(canvas, end, start, linePaint, isActive);
 
-    final mid = Offset((start.dx + end.dx) * 0.5 + labelOffset.dx, (start.dy + end.dy) * 0.5 + labelOffset.dy);
-
     final textSpan = TextSpan(
       text: label,
       style: const TextStyle(
         color: AppColors.brandGold,
-        fontSize: 12.0,
+        fontSize: 11.5,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.4,
       ),
     );
 
     final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
+    final badgeWidth = textPainter.width + 16;
+    final badgeHeight = textPainter.height + 6;
+
+    final rawMidX = (start.dx + end.dx) * 0.5 + labelOffset.dx;
+    // Strictly clamp the badge within canvas to guarantee NO clipping
+    final clampedMidX = rawMidX.clamp(badgeWidth * 0.5 + 8, size.width - badgeWidth * 0.5 - 8);
+    final mid = Offset(clampedMidX, (start.dy + end.dy) * 0.5 + labelOffset.dy);
+
     final badgeRect = Rect.fromCenter(
       center: mid,
-      width: textPainter.width + 16,
-      height: textPainter.height + 6,
+      width: badgeWidth,
+      height: badgeHeight,
     );
 
     final glowBadge = Paint()
@@ -819,6 +837,7 @@ class _RoofBlueprintPainter extends CustomPainter {
 
   void _paintSlopedDimension({
     required Canvas canvas,
+    required Size size,
     required Offset start,
     required Offset end,
     required String label,
@@ -851,7 +870,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       text: label,
       style: const TextStyle(
         color: AppColors.brandGold,
-        fontSize: 12.0,
+        fontSize: 11.5,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.4,
       ),
