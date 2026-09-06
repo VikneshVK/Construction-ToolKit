@@ -469,15 +469,15 @@ class _DynamicGuidePainter extends CustomPainter {
     final isWidthActive = activeDimension.toLowerCase() == 'width';
     final isThicknessActive = activeDimension.toLowerCase() == 'thickness' || activeDimension.toLowerCase() == 'depth';
 
-    final center = Offset(size.width * 0.52, size.height * 0.38);
+    final center = Offset(size.width * 0.54, size.height * 0.35);
 
     // 4 Top Face Vertices (Isometric Diamond)
-    final pLeft = Offset(center.dx - 90, center.dy);
-    final pTop = Offset(center.dx, center.dy - 34);
-    final pRight = Offset(center.dx + 90, center.dy);
-    final pBottom = Offset(center.dx, center.dy + 34);
+    final pLeft = Offset(center.dx - 82, center.dy);
+    final pTop = Offset(center.dx, center.dy - 30);
+    final pRight = Offset(center.dx + 82, center.dy);
+    final pBottom = Offset(center.dx, center.dy + 30);
 
-    final slabThickness = 24.0;
+    final slabThickness = 22.0;
 
     // 4 Bottom Face Vertices
     final bLeft = Offset(pLeft.dx, pLeft.dy + slabThickness);
@@ -538,43 +538,45 @@ class _DynamicGuidePainter extends CustomPainter {
 
     // --- Dynamic Dimension Arrows & Labels ---
 
-    // A. LENGTH DIMENSION LINE (parallel along front-left bottom edge)
+    // A. LENGTH DIMENSION LINE (parallel along front-left bottom edge with gap)
     final lenVal = values['length'] ?? '';
     final lenLabel = lenVal.isNotEmpty ? 'Length: $lenVal' : 'LENGTH';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(bLeft.dx - 12, bLeft.dy + 12),
-      end: Offset(bBottom.dx - 12, bBottom.dy + 12),
+      start: Offset(bLeft.dx - 8, bLeft.dy + 8),
+      end: Offset(bBottom.dx - 8, bBottom.dy + 8),
       label: lenLabel,
       isActive: isLengthActive,
       pulseFactor: pulseFactor,
+      perpendicularOffset: 20.0,
       rotateParallel: true,
     );
 
-    // B. WIDTH DIMENSION LINE (parallel along front-right bottom edge)
+    // B. WIDTH DIMENSION LINE (parallel along front-right bottom edge with gap)
     final widthVal = values['width'] ?? '';
     final widthLabel = widthVal.isNotEmpty ? 'Width: $widthVal' : 'WIDTH';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(bBottom.dx + 12, bBottom.dy + 12),
-      end: Offset(bRight.dx + 12, bRight.dy + 12),
+      start: Offset(bBottom.dx + 8, bBottom.dy + 8),
+      end: Offset(bRight.dx + 8, bRight.dy + 8),
       label: widthLabel,
       isActive: isWidthActive,
       pulseFactor: pulseFactor,
+      perpendicularOffset: 20.0,
       rotateParallel: true,
     );
 
-    // C. THICKNESS / DEPTH DIMENSION LINE (along left vertical edge)
+    // C. THICKNESS / DEPTH DIMENSION LINE (along left vertical edge with gap)
     final thickVal = values['thickness'] ?? values['depth'] ?? '';
     final thickLabel = thickVal.isNotEmpty ? 'Depth: $thickVal' : 'THICKNESS';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(pLeft.dx - 16, pLeft.dy),
-      end: Offset(bLeft.dx - 16, bLeft.dy),
+      start: Offset(pLeft.dx - 10, pLeft.dy),
+      end: Offset(bLeft.dx - 10, bLeft.dy),
       label: thickLabel,
       isActive: isThicknessActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(-24, 0),
+      labelOffset: const Offset(-46, 0),
     );
   }
 
@@ -845,6 +847,7 @@ class _DynamicGuidePainter extends CustomPainter {
     required bool isActive,
     required double pulseFactor,
     Offset labelOffset = Offset.zero,
+    double perpendicularOffset = 0.0,
     bool rotateParallel = false,
   }) {
     final color = isActive
@@ -864,8 +867,20 @@ class _DynamicGuidePainter extends CustomPainter {
     _drawArrowOrTick(canvas, start, end, linePaint, isActive);
     _drawArrowOrTick(canvas, end, start, linePaint, isActive);
 
-    // Midpoint
-    final mid = Offset((start.dx + end.dx) * 0.5 + labelOffset.dx, (start.dy + end.dy) * 0.5 + labelOffset.dy);
+    // Calculate perpendicular offset vector
+    final dx = end.dx - start.dx;
+    final dy = end.dy - start.dy;
+    final len = math.sqrt(dx * dx + dy * dy);
+    Offset perp = Offset.zero;
+    if (len > 0 && perpendicularOffset != 0.0) {
+      perp = Offset(-dy / len * perpendicularOffset, dx / len * perpendicularOffset);
+    }
+
+    // Midpoint with offset
+    final mid = Offset(
+      (start.dx + end.dx) * 0.5 + labelOffset.dx + perp.dx,
+      (start.dy + end.dy) * 0.5 + labelOffset.dy + perp.dy,
+    );
 
     final textSpan = TextSpan(
       text: label,
@@ -892,8 +907,6 @@ class _DynamicGuidePainter extends CustomPainter {
     canvas.translate(mid.dx, mid.dy);
 
     if (rotateParallel) {
-      final dx = end.dx - start.dx;
-      final dy = end.dy - start.dy;
       double rot = math.atan2(dy, dx);
       if (rot > math.pi / 2) {
         rot -= math.pi;
