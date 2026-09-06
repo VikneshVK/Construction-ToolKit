@@ -799,9 +799,9 @@ class _DynamicGuidePainter extends CustomPainter {
     final isLenActive = activeDimension.toLowerCase() == 'walllength' || activeDimension.toLowerCase() == 'length';
     final isHeightActive = activeDimension.toLowerCase() == 'wallheight' || activeDimension.toLowerCase() == 'height';
 
-    // Position wall comfortably with safe right margin for the height dimension line
-    final wallW = math.min(size.width * 0.54, 210.0);
-    final wallLeft = math.max(28.0, (size.width - wallW - 56.0) * 0.40);
+    // Position wall comfortably with safe right margin for the height dimension line & badge
+    final wallW = math.min(size.width * 0.44, 165.0);
+    final wallLeft = math.max(24.0, size.width * 0.10);
     final wallRight = wallLeft + wallW;
     final wallTop = size.height * 0.26;
     final wallBottom = size.height * 0.80;
@@ -845,24 +845,24 @@ class _DynamicGuidePainter extends CustomPainter {
     // Outer wall outline
     canvas.drawRect(wallRect, wallStroke);
 
-    // Wall Length Line (Top)
+    // Wall Length Line (Top - badge positioned cleanly above line)
     final lVal = values['wallLength'] ?? values['length'] ?? '';
     final lLabel = lVal.isNotEmpty ? 'Length: $lVal' : 'WALL LENGTH';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(wallLeft, wallTop - 18),
-      end: Offset(wallRight, wallTop - 18),
+      start: Offset(wallLeft, wallTop - 14),
+      end: Offset(wallRight, wallTop - 14),
       label: lLabel,
       isActive: isLenActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, -12),
+      labelOffset: const Offset(0, -6),
       canvasSize: size,
     );
 
-    // Wall Height Line (Right side with comfortable clearance inside canvas)
+    // Wall Height Line (Right side - badge positioned cleanly to the RIGHT of the line with gap)
     final hVal = values['wallHeight'] ?? values['height'] ?? '';
     final hLabel = hVal.isNotEmpty ? 'Height: $hVal' : 'WALL HEIGHT';
-    final dimRightX = wallRight + 20.0;
+    final dimRightX = wallRight + 14.0;
     _paintDimensionLine(
       canvas: canvas,
       start: Offset(dimRightX, wallTop),
@@ -870,7 +870,7 @@ class _DynamicGuidePainter extends CustomPainter {
       label: hLabel,
       isActive: isHeightActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(12, 0),
+      labelOffset: const Offset(8, 0),
       canvasSize: size,
     );
   }
@@ -931,11 +931,33 @@ class _DynamicGuidePainter extends CustomPainter {
     final badgeWidth = textPainter.width + (isActive ? 16 : 10);
     final badgeHeight = textPainter.height + (isActive ? 6 : 4);
 
-    // Midpoint with offset
-    double midX = (start.dx + end.dx) * 0.5 + labelOffset.dx + perp.dx;
-    final midY = (start.dy + end.dy) * 0.5 + labelOffset.dy + perp.dy;
+    // Calculate midpoint with smart gap offset to ensure badges NEVER intersect measurement lines
+    double midX = (start.dx + end.dx) * 0.5 + perp.dx;
+    double midY = (start.dy + end.dy) * 0.5 + perp.dy;
 
-    // Hard boundary clamping to guarantee NO clipping
+    final isVertical = (start.dx - end.dx).abs() < 1.0;
+    final isHorizontal = (start.dy - end.dy).abs() < 1.0;
+
+    if (isVertical) {
+      if (labelOffset.dx > 0) {
+        midX = start.dx + labelOffset.dx + badgeWidth * 0.5;
+      } else if (labelOffset.dx < 0) {
+        midX = start.dx + labelOffset.dx - badgeWidth * 0.5;
+      }
+      midY += labelOffset.dy;
+    } else if (isHorizontal) {
+      midX += labelOffset.dx;
+      if (labelOffset.dy < 0) {
+        midY = start.dy + labelOffset.dy - badgeHeight * 0.5;
+      } else if (labelOffset.dy > 0) {
+        midY = start.dy + labelOffset.dy + badgeHeight * 0.5;
+      }
+    } else {
+      midX += labelOffset.dx;
+      midY += labelOffset.dy;
+    }
+
+    // Hard boundary clamping to guarantee NO clipping on screen edges
     if (canvasSize != null && !rotateParallel) {
       midX = midX.clamp(badgeWidth * 0.5 + 6, canvasSize.width - badgeWidth * 0.5 - 6);
     }
