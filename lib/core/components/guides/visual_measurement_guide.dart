@@ -12,6 +12,7 @@ enum MeasurementGuideType {
   stairs,
   roof,
   masonry,
+  wall,
 }
 
 /// Visual "Where Do I Measure?" interactive dynamic blueprint guide with live dimension highlighting.
@@ -247,6 +248,7 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
     switch (widget.type) {
       case MeasurementGuideType.slab:
       case MeasurementGuideType.footing:
+      case MeasurementGuideType.wall:
         return 'length';
       case MeasurementGuideType.column:
         return 'diameter';
@@ -265,6 +267,8 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
         return ['length', 'width', 'thickness'];
       case MeasurementGuideType.footing:
         return ['length', 'width', 'depth'];
+      case MeasurementGuideType.wall:
+        return ['length', 'height', 'thickness'];
       case MeasurementGuideType.column:
         return ['diameter', 'height'];
       case MeasurementGuideType.stairs:
@@ -282,6 +286,8 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
       case MeasurementGuideType.footing:
       case MeasurementGuideType.column:
         return Icons.layers_outlined;
+      case MeasurementGuideType.wall:
+        return Icons.foundation;
       case MeasurementGuideType.stairs:
         return Icons.stairs_outlined;
       case MeasurementGuideType.roof:
@@ -297,6 +303,8 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
         return 'Concrete Slab Guide';
       case MeasurementGuideType.footing:
         return 'Trench Footing Guide';
+      case MeasurementGuideType.wall:
+        return 'Concrete Wall Guide';
       case MeasurementGuideType.column:
         return 'Round Column Guide';
       case MeasurementGuideType.stairs:
@@ -311,6 +319,13 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
   _DimensionInfo _getDimensionInfo(String key) {
     switch (key.toLowerCase()) {
       case 'length':
+        if (widget.type == MeasurementGuideType.wall) {
+          return const _DimensionInfo(
+            title: 'Wall Length (L)',
+            shortLabel: 'Length',
+            measuringTip: 'Total horizontal continuous length of the poured concrete foundation wall.',
+          );
+        }
         return const _DimensionInfo(
           title: 'Length (L)',
           shortLabel: 'Length',
@@ -324,6 +339,13 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
         );
       case 'thickness':
       case 'depth':
+        if (widget.type == MeasurementGuideType.wall) {
+          return const _DimensionInfo(
+            title: 'Wall Thickness (T)',
+            shortLabel: 'Thickness',
+            measuringTip: 'Horizontal thickness between form boards (typically 8" to 10" for foundations, 20-25 cm).',
+          );
+        }
         return const _DimensionInfo(
           title: 'Thickness (Depth)',
           shortLabel: 'Thickness',
@@ -336,6 +358,13 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
           measuringTip: 'Inside diameter of sonotube or auger hole across the center.',
         );
       case 'height':
+        if (widget.type == MeasurementGuideType.wall) {
+          return const _DimensionInfo(
+            title: 'Wall Height (H)',
+            shortLabel: 'Height',
+            measuringTip: 'Vertical height from top of footing to the top of the wall form.',
+          );
+        }
         return const _DimensionInfo(
           title: 'Height (H)',
           shortLabel: 'Height',
@@ -434,6 +463,9 @@ class _DynamicGuidePainter extends CustomPainter {
       case MeasurementGuideType.slab:
       case MeasurementGuideType.footing:
         _paintIsometricSlab(canvas, size);
+        break;
+      case MeasurementGuideType.wall:
+        _paintConcreteWall(canvas, size);
         break;
       case MeasurementGuideType.column:
         _paintCylinder(canvas, size);
@@ -577,6 +609,159 @@ class _DynamicGuidePainter extends CustomPainter {
       isActive: isThicknessActive,
       pulseFactor: pulseFactor,
       labelOffset: const Offset(-46, 0),
+    );
+  }
+
+  void _paintConcreteWall(Canvas canvas, Size size) {
+    final isLengthActive = activeDimension.toLowerCase() == 'length';
+    final isHeightActive = activeDimension.toLowerCase() == 'height';
+    final isThicknessActive = activeDimension.toLowerCase() == 'thickness' || activeDimension.toLowerCase() == 'depth';
+
+    // Position wall comfortably within the canvas
+    final center = Offset(size.width * 0.46, size.height * 0.50);
+    final wallW = math.min(size.width * 0.44, 160.0);
+    final wallH = 68.0;
+    const thickDepthX = 28.0;
+    const thickDepthY = 14.0;
+
+    // 3D Isometric Wall Vertices
+    // Front Face (Length x Height)
+    final pTopLeft = Offset(center.dx - wallW * 0.5, center.dy - wallH * 0.5 + thickDepthY * 0.5);
+    final pTopRight = Offset(center.dx + wallW * 0.5, pTopLeft.dy);
+    final pBottomLeft = Offset(pTopLeft.dx, pTopLeft.dy + wallH);
+    final pBottomRight = Offset(pTopRight.dx, pBottomLeft.dy);
+
+    // Top Face (Length x Thickness)
+    final pTopLeftBack = Offset(pTopLeft.dx + thickDepthX, pTopLeft.dy - thickDepthY);
+    final pTopRightBack = Offset(pTopRight.dx + thickDepthX, pTopRight.dy - thickDepthY);
+
+    // Right Face (Thickness x Height)
+    final pBottomRightBack = Offset(pBottomRight.dx + thickDepthX, pBottomRight.dy - thickDepthY);
+
+    // 1. Top Face Fill & Stroke
+    final topFace = Path()
+      ..moveTo(pTopLeft.dx, pTopLeft.dy)
+      ..lineTo(pTopRight.dx, pTopRight.dy)
+      ..lineTo(pTopRightBack.dx, pTopRightBack.dy)
+      ..lineTo(pTopLeftBack.dx, pTopLeftBack.dy)
+      ..close();
+
+    final topFacePaint = Paint()
+      ..color = isThicknessActive
+          ? AppColors.brandGold.withValues(alpha: 0.25 + 0.1 * pulseFactor)
+          : const Color(0xFF263345)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(topFace, topFacePaint);
+
+    final outlinePaint = Paint()
+      ..color = const Color(0xFF475569)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(topFace, outlinePaint);
+
+    // 2. Right End Face (Thickness x Height)
+    final rightFace = Path()
+      ..moveTo(pTopRight.dx, pTopRight.dy)
+      ..lineTo(pTopRightBack.dx, pTopRightBack.dy)
+      ..lineTo(pBottomRightBack.dx, pBottomRightBack.dy)
+      ..lineTo(pBottomRight.dx, pBottomRight.dy)
+      ..close();
+
+    final rightFacePaint = Paint()
+      ..color = isThicknessActive || isHeightActive
+          ? AppColors.brandGold.withValues(alpha: 0.15 + 0.08 * pulseFactor)
+          : const Color(0xFF141C28)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(rightFace, rightFacePaint);
+    canvas.drawPath(rightFace, outlinePaint);
+
+    // 3. Front Main Face (Length x Height)
+    final frontFace = Path()
+      ..moveTo(pTopLeft.dx, pTopLeft.dy)
+      ..lineTo(pTopRight.dx, pTopRight.dy)
+      ..lineTo(pBottomRight.dx, pBottomRight.dy)
+      ..lineTo(pBottomLeft.dx, pBottomLeft.dy)
+      ..close();
+
+    final frontFacePaint = Paint()
+      ..color = isLengthActive || isHeightActive
+          ? AppColors.brandGold.withValues(alpha: 0.18 + 0.1 * pulseFactor)
+          : const Color(0xFF1A2332)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(frontFace, frontFacePaint);
+    canvas.drawPath(frontFace, outlinePaint);
+
+    // Subtle formwork panel seams and snap-tie dots (realistic poured concrete wall look)
+    final seamPaint = Paint()
+      ..color = const Color(0xFF334155)
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+    final tiePaint = Paint()
+      ..color = const Color(0xFF475569)
+      ..style = PaintingStyle.fill;
+
+    // Vertical panel seams
+    const seamCount = 3;
+    final seamW = wallW / (seamCount + 1);
+    for (int i = 1; i <= seamCount; i++) {
+      final sx = pTopLeft.dx + i * seamW;
+      canvas.drawLine(Offset(sx, pTopLeft.dy), Offset(sx, pBottomLeft.dy), seamPaint);
+      canvas.drawCircle(Offset(sx, pTopLeft.dy + wallH * 0.3), 1.6, tiePaint);
+      canvas.drawCircle(Offset(sx, pTopLeft.dy + wallH * 0.7), 1.6, tiePaint);
+    }
+
+    // Footing guide line below the wall
+    final footingLine = Paint()
+      ..color = const Color(0xFF334155).withValues(alpha: 0.7)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(
+      Offset(pBottomLeft.dx - 12, pBottomLeft.dy),
+      Offset(pBottomRight.dx + 12, pBottomRight.dy),
+      footingLine,
+    );
+
+    // --- Dynamic Dimension Arrows & Labels ---
+
+    // A. LENGTH DIMENSION LINE (along front bottom edge)
+    final lenVal = values['length'] ?? '';
+    final lenLabel = lenVal.isNotEmpty ? 'Length: $lenVal' : 'WALL LENGTH';
+    _paintDimensionLine(
+      canvas: canvas,
+      start: Offset(pBottomLeft.dx, pBottomLeft.dy + 14),
+      end: Offset(pBottomRight.dx, pBottomRight.dy + 14),
+      label: lenLabel,
+      isActive: isLengthActive,
+      pulseFactor: pulseFactor,
+      labelOffset: const Offset(0, 6),
+      canvasSize: size,
+    );
+
+    // B. HEIGHT DIMENSION LINE (along left vertical edge with gap)
+    final hVal = values['height'] ?? '';
+    final hLabel = hVal.isNotEmpty ? 'Height: $hVal' : 'WALL HEIGHT';
+    _paintDimensionLine(
+      canvas: canvas,
+      start: Offset(pBottomLeft.dx - 14, pBottomLeft.dy),
+      end: Offset(pBottomLeft.dx - 14, pTopLeft.dy),
+      label: hLabel,
+      isActive: isHeightActive,
+      pulseFactor: pulseFactor,
+      labelOffset: const Offset(-8, 0),
+      canvasSize: size,
+    );
+
+    // C. THICKNESS DIMENSION LINE (across top thickness edge)
+    final thickVal = values['thickness'] ?? '';
+    final thickLabel = thickVal.isNotEmpty ? 'Thickness: $thickVal' : 'THICKNESS';
+    _paintDimensionLine(
+      canvas: canvas,
+      start: Offset(pTopRight.dx + 4, pTopRight.dy - 6),
+      end: Offset(pTopRightBack.dx + 4, pTopRightBack.dy - 6),
+      label: thickLabel,
+      isActive: isThicknessActive,
+      pulseFactor: pulseFactor,
+      labelOffset: const Offset(8, -10),
+      canvasSize: size,
     );
   }
 

@@ -90,5 +90,17 @@ void main() {
     await tester.tap(find.textContaining('Thickness').first);
     await tester.pumpAndSettle();
     expect(find.text('Thickness (Depth)'), findsOneWidget);
+
+    // 5. Switch to Wall sub-tab in Concrete and verify Concrete Wall Guide
+    await tester.tap(find.text('Wall'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Concrete Wall Guide'), findsOneWidget);
+    expect(find.text('Wall Length (L)'), findsOneWidget);
+
+    // Tap Height chip on Concrete Wall guide
+    await tester.tap(find.textContaining('Height').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Wall Height (H)'), findsOneWidget);
   });
 }

@@ -294,6 +294,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         'diameter': '${_concDim1Ctrl.text} $thickUnit',
         'height': '${_concDim2Ctrl.text} $lenUnit',
       };
+    } else if (_concreteType == ConcreteStructureType.wall) {
+      guideType = MeasurementGuideType.wall;
+      guideVals = {
+        'length': '${_concDim1Ctrl.text} $lenUnit',
+        'height': '${_concDim2Ctrl.text} $lenUnit',
+        'thickness': '${_concDim3Ctrl.text} $thickUnit',
+      };
     } else {
       guideType = MeasurementGuideType.slab;
       guideVals = {
@@ -526,9 +533,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   unit: lenUnit,
                   controller: _concDim2Ctrl,
                   infoDescription: 'Vertical height of the wall.',
-                  onTap: () => setState(() => _activeConcreteDim = 'width'),
+                  onTap: () => setState(() => _activeConcreteDim = 'height'),
                   onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'width');
+                    if (f) setState(() => _activeConcreteDim = 'height');
                   },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
