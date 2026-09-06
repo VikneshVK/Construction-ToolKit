@@ -468,15 +468,15 @@ class _DynamicGuidePainter extends CustomPainter {
     final isWidthActive = activeDimension.toLowerCase() == 'width';
     final isThicknessActive = activeDimension.toLowerCase() == 'thickness' || activeDimension.toLowerCase() == 'depth';
 
-    final center = Offset(size.width * 0.5, size.height * 0.44);
+    final center = Offset(size.width * 0.5, size.height * 0.38);
 
     // 4 Top Face Vertices (Isometric Diamond)
-    final pLeft = Offset(center.dx - 110, center.dy);
-    final pTop = Offset(center.dx, center.dy - 40);
-    final pRight = Offset(center.dx + 110, center.dy);
-    final pBottom = Offset(center.dx, center.dy + 40);
+    final pLeft = Offset(center.dx - 105, center.dy);
+    final pTop = Offset(center.dx, center.dy - 38);
+    final pRight = Offset(center.dx + 105, center.dy);
+    final pBottom = Offset(center.dx, center.dy + 38);
 
-    final slabThickness = 28.0;
+    final slabThickness = 26.0;
 
     // 4 Bottom Face Vertices
     final bLeft = Offset(pLeft.dx, pLeft.dy + slabThickness);
@@ -542,12 +542,12 @@ class _DynamicGuidePainter extends CustomPainter {
     final lenLabel = lenVal.isNotEmpty ? 'Length: $lenVal' : 'LENGTH';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(bLeft.dx - 10, bLeft.dy + 10),
-      end: Offset(bBottom.dx - 10, bBottom.dy + 10),
+      start: Offset(bLeft.dx - 8, bLeft.dy + 8),
+      end: Offset(bBottom.dx - 8, bBottom.dy + 8),
       label: lenLabel,
       isActive: isLengthActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(-10, 14),
+      labelOffset: const Offset(-8, 12),
     );
 
     // B. WIDTH DIMENSION LINE (along front-right bottom edge)
@@ -555,12 +555,12 @@ class _DynamicGuidePainter extends CustomPainter {
     final widthLabel = widthVal.isNotEmpty ? 'Width: $widthVal' : 'WIDTH';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(bBottom.dx + 10, bBottom.dy + 10),
-      end: Offset(bRight.dx + 10, bRight.dy + 10),
+      start: Offset(bBottom.dx + 8, bBottom.dy + 8),
+      end: Offset(bRight.dx + 8, bRight.dy + 8),
       label: widthLabel,
       isActive: isWidthActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(10, 14),
+      labelOffset: const Offset(8, 12),
     );
 
     // C. THICKNESS / DEPTH DIMENSION LINE (along left vertical edge)
@@ -568,12 +568,12 @@ class _DynamicGuidePainter extends CustomPainter {
     final thickLabel = thickVal.isNotEmpty ? 'Depth: $thickVal' : 'THICKNESS';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(pLeft.dx - 22, pLeft.dy),
-      end: Offset(bLeft.dx - 22, bLeft.dy),
+      start: Offset(pLeft.dx - 20, pLeft.dy),
+      end: Offset(bLeft.dx - 20, bLeft.dy),
       label: thickLabel,
       isActive: isThicknessActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(-32, 0),
+      labelOffset: const Offset(-28, 0),
     );
   }
 
@@ -581,10 +581,10 @@ class _DynamicGuidePainter extends CustomPainter {
     final isDiaActive = activeDimension.toLowerCase() == 'diameter';
     final isHeightActive = activeDimension.toLowerCase() == 'height';
 
-    final center = Offset(size.width * 0.5, size.height * 0.52);
-    final radiusX = 55.0;
-    final radiusY = 18.0;
-    final height = 85.0;
+    final center = Offset(size.width * 0.5, size.height * 0.50);
+    final radiusX = 52.0;
+    final radiusY = 16.0;
+    final height = 78.0;
 
     final topCenter = Offset(center.dx, center.dy - height * 0.45);
     final bottomCenter = Offset(center.dx, center.dy + height * 0.45);
@@ -622,24 +622,24 @@ class _DynamicGuidePainter extends CustomPainter {
     final diaVal = values['diameter'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(topCenter.dx - radiusX, topCenter.dy - 16),
-      end: Offset(topCenter.dx + radiusX, topCenter.dy - 16),
+      start: Offset(topCenter.dx - radiusX, topCenter.dy - 14),
+      end: Offset(topCenter.dx + radiusX, topCenter.dy - 14),
       label: diaVal.isNotEmpty ? 'Diameter: $diaVal' : 'DIAMETER',
       isActive: isDiaActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, -14),
+      labelOffset: const Offset(0, -12),
     );
 
     // Height Dimension Line
     final hVal = values['height'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(topCenter.dx + radiusX + 22, topCenter.dy),
-      end: Offset(bottomCenter.dx + radiusX + 22, bottomCenter.dy),
+      start: Offset(topCenter.dx + radiusX + 20, topCenter.dy),
+      end: Offset(bottomCenter.dx + radiusX + 20, bottomCenter.dy),
       label: hVal.isNotEmpty ? 'Height: $hVal' : 'HEIGHT',
       isActive: isHeightActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(32, 0),
+      labelOffset: const Offset(30, 0),
     );
   }
 
@@ -648,10 +648,11 @@ class _DynamicGuidePainter extends CustomPainter {
     final isTreadActive = activeDimension.toLowerCase() == 'tread';
     final isRunActive = activeDimension.toLowerCase() == 'run';
 
-    final start = Offset(size.width * 0.16, size.height * 0.85);
+    // Positioned with clear top and bottom margins inside the 175px canvas
+    final start = Offset(size.width * 0.14, size.height * 0.74);
     final numSteps = 4;
-    final stepW = 42.0;
-    final stepH = 24.0;
+    final stepW = 40.0;
+    final stepH = 21.0;
 
     final stairPath = Path()..moveTo(start.dx, start.dy);
     double curX = start.dx;
@@ -664,7 +665,7 @@ class _DynamicGuidePainter extends CustomPainter {
       stairPath.lineTo(curX, curY); // Rise
     }
     // Top landing
-    stairPath.lineTo(curX + 28, curY);
+    stairPath.lineTo(curX + 24, curY);
 
     // Stair Outline & Glow
     final stairPaint = Paint()
@@ -677,12 +678,12 @@ class _DynamicGuidePainter extends CustomPainter {
     final riseVal = values['rise'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(curX + 38, start.dy),
-      end: Offset(curX + 38, curY),
+      start: Offset(curX + 34, start.dy),
+      end: Offset(curX + 34, curY),
       label: riseVal.isNotEmpty ? 'Rise: $riseVal' : 'TOTAL RISE (HEIGHT)',
       isActive: isRiseActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(32, 0),
+      labelOffset: const Offset(30, 0),
     );
 
     // Single Tread Depth Dimension Line (Top Step)
@@ -691,24 +692,24 @@ class _DynamicGuidePainter extends CustomPainter {
     final step2Y = start.dy - stepH * 2;
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(step2X, step2Y - 12),
-      end: Offset(step2X + stepW, step2Y - 12),
+      start: Offset(step2X, step2Y - 10),
+      end: Offset(step2X + stepW, step2Y - 10),
       label: treadVal.isNotEmpty ? 'Tread: $treadVal' : 'STEP TREAD',
       isActive: isTreadActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, -14),
+      labelOffset: const Offset(0, -12),
     );
 
-    // Total Run Dimension Line (Bottom Base)
+    // Total Run Dimension Line (Bottom Base - fully inside canvas bounds)
     final runVal = values['run'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(start.dx, start.dy + 16),
-      end: Offset(curX, start.dy + 16),
+      start: Offset(start.dx, start.dy + 12),
+      end: Offset(curX, start.dy + 12),
       label: runVal.isNotEmpty ? 'Run: $runVal' : 'TOTAL RUN (LENGTH)',
       isActive: isRunActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 14),
+      labelOffset: const Offset(0, 12),
     );
   }
 
@@ -717,11 +718,11 @@ class _DynamicGuidePainter extends CustomPainter {
     final isPitchActive = activeDimension.toLowerCase() == 'pitch';
     final isOverhangActive = activeDimension.toLowerCase() == 'overhang';
 
-    final centerRidge = Offset(size.width * 0.5, size.height * 0.18);
-    final wallLeft = Offset(size.width * 0.22, size.height * 0.65);
-    final eavesLeft = Offset(size.width * 0.08, size.height * 0.78);
-    final wallRight = Offset(size.width * 0.78, size.height * 0.65);
-    final eavesRight = Offset(size.width * 0.92, size.height * 0.78);
+    final centerRidge = Offset(size.width * 0.5, size.height * 0.20);
+    final wallLeft = Offset(size.width * 0.22, size.height * 0.64);
+    final eavesLeft = Offset(size.width * 0.08, size.height * 0.74);
+    final wallRight = Offset(size.width * 0.78, size.height * 0.64);
+    final eavesRight = Offset(size.width * 0.92, size.height * 0.74);
 
     // Roof Truss Outline
     final roofPath = Path()
@@ -739,19 +740,19 @@ class _DynamicGuidePainter extends CustomPainter {
     final wallPaint = Paint()
       ..color = const Color(0xFF334155)
       ..strokeWidth = 1.5;
-    canvas.drawLine(wallLeft, Offset(wallLeft.dx, wallLeft.dy + 26), wallPaint);
-    canvas.drawLine(wallRight, Offset(wallRight.dx, wallRight.dy + 26), wallPaint);
+    canvas.drawLine(wallLeft, Offset(wallLeft.dx, wallLeft.dy + 22), wallPaint);
+    canvas.drawLine(wallRight, Offset(wallRight.dx, wallRight.dy + 22), wallPaint);
 
     // Horizontal Run Dimension Line (From Wall to Center Ridge)
     final runVal = values['run'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(wallLeft.dx, wallLeft.dy + 14),
-      end: Offset(centerRidge.dx, wallLeft.dy + 14),
+      start: Offset(wallLeft.dx, wallLeft.dy + 12),
+      end: Offset(centerRidge.dx, wallLeft.dy + 12),
       label: runVal.isNotEmpty ? 'Run: $runVal' : 'HORIZONTAL RUN (HALF-SPAN)',
       isActive: isRunActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 14),
+      labelOffset: const Offset(0, 12),
     );
 
     // Roof Pitch Slope Triangle (on left rafter)
@@ -772,12 +773,12 @@ class _DynamicGuidePainter extends CustomPainter {
     final overhangVal = values['overhang'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(eavesLeft.dx, eavesLeft.dy + 14),
-      end: Offset(wallLeft.dx, eavesLeft.dy + 14),
+      start: Offset(eavesLeft.dx, eavesLeft.dy + 12),
+      end: Offset(wallLeft.dx, eavesLeft.dy + 12),
       label: overhangVal.isNotEmpty ? 'Eaves: $overhangVal' : 'OVERHANG',
       isActive: isOverhangActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 14),
+      labelOffset: const Offset(0, 12),
     );
   }
 
