@@ -721,13 +721,13 @@ class _DynamicGuidePainter extends CustomPainter {
     final isPitchActive = activeDimension.toLowerCase() == 'pitch';
     final isOverhangActive = activeDimension.toLowerCase() == 'overhang';
 
-    final centerRidge = Offset(size.width * 0.5, size.height * 0.20);
-    final wallLeft = Offset(size.width * 0.22, size.height * 0.64);
-    final eavesLeft = Offset(size.width * 0.08, size.height * 0.74);
-    final wallRight = Offset(size.width * 0.78, size.height * 0.64);
-    final eavesRight = Offset(size.width * 0.92, size.height * 0.74);
+    final centerRidge = Offset(size.width * 0.5, size.height * 0.22);
+    final wallLeft = Offset(size.width * 0.24, size.height * 0.60);
+    final wallRight = Offset(size.width * 0.76, size.height * 0.60);
+    final eavesLeft = Offset(size.width * 0.10, size.height * 0.72);
+    final eavesRight = Offset(size.width * 0.90, size.height * 0.72);
 
-    // Roof Truss Outline
+    // 1. Roof Truss Outline
     final roofPath = Path()
       ..moveTo(eavesLeft.dx, eavesLeft.dy)
       ..lineTo(centerRidge.dx, centerRidge.dy)
@@ -739,49 +739,54 @@ class _DynamicGuidePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     canvas.drawPath(roofPath, roofPaint);
 
-    // Exterior Wall Indicators
+    // 2. Exterior Wall Indicators & Center Plumb Line
     final wallPaint = Paint()
       ..color = const Color(0xFF334155)
       ..strokeWidth = 1.5;
-    canvas.drawLine(wallLeft, Offset(wallLeft.dx, wallLeft.dy + 22), wallPaint);
-    canvas.drawLine(wallRight, Offset(wallRight.dx, wallRight.dy + 22), wallPaint);
+    canvas.drawLine(wallLeft, Offset(wallLeft.dx, wallLeft.dy + 30), wallPaint);
+    canvas.drawLine(wallRight, Offset(wallRight.dx, wallRight.dy + 30), wallPaint);
 
-    // Horizontal Run Dimension Line (From Wall to Center Ridge)
-    final runVal = values['run'] ?? '';
-    _paintDimensionLine(
-      canvas: canvas,
-      start: Offset(wallLeft.dx, wallLeft.dy + 12),
-      end: Offset(centerRidge.dx, wallLeft.dy + 12),
-      label: runVal.isNotEmpty ? 'Run: $runVal' : 'HORIZONTAL RUN (HALF-SPAN)',
-      isActive: isRunActive,
-      pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 12),
-    );
+    final plumbPaint = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(centerRidge, Offset(centerRidge.dx, wallLeft.dy + 30), plumbPaint);
 
-    // Roof Pitch Slope Triangle (on left rafter)
-    final midRafter = Offset(
-      (centerRidge.dx + wallLeft.dx) * 0.5,
-      (centerRidge.dy + wallLeft.dy) * 0.5,
-    );
-    final pitchVal = values['pitch'] ?? '';
-    _paintSlopeTriangle(
-      canvas: canvas,
-      origin: midRafter,
-      pitchText: pitchVal.isNotEmpty ? '$pitchVal:12' : 'PITCH / 12',
-      isActive: isPitchActive,
-      pulseFactor: pulseFactor,
-    );
+    // 3. Shared Horizontal Elevation Baseline for Overhang and Run Dimension Strings
+    final dimY = wallLeft.dy + 18.0;
 
-    // Overhang Dimension Line
+    // A. Overhang Dimension Line (Eaves to Wall)
     final overhangVal = values['overhang'] ?? '';
     _paintDimensionLine(
       canvas: canvas,
-      start: Offset(eavesLeft.dx, eavesLeft.dy + 12),
-      end: Offset(wallLeft.dx, eavesLeft.dy + 12),
+      start: Offset(eavesLeft.dx, dimY),
+      end: Offset(wallLeft.dx, dimY),
       label: overhangVal.isNotEmpty ? 'Eaves: $overhangVal' : 'OVERHANG',
       isActive: isOverhangActive,
       pulseFactor: pulseFactor,
-      labelOffset: const Offset(0, 12),
+      labelOffset: const Offset(0, 14),
+    );
+
+    // B. Horizontal Run Dimension Line (Wall to Center Ridge)
+    final runVal = values['run'] ?? '';
+    _paintDimensionLine(
+      canvas: canvas,
+      start: Offset(wallLeft.dx, dimY),
+      end: Offset(centerRidge.dx, dimY),
+      label: runVal.isNotEmpty ? 'Run: $runVal' : 'RUN (HALF-SPAN)',
+      isActive: isRunActive,
+      pulseFactor: pulseFactor,
+      labelOffset: const Offset(0, 14),
+    );
+
+    // 4. Roof Pitch Slope Triangle (resting above left rafter)
+    final pitchVal = values['pitch'] ?? '';
+    _paintSlopeTriangle(
+      canvas: canvas,
+      rafterStart: eavesLeft,
+      rafterEnd: centerRidge,
+      pitchText: pitchVal.isNotEmpty ? '$pitchVal:12' : 'PITCH / 12',
+      isActive: isPitchActive,
+      pulseFactor: pulseFactor,
     );
   }
 
@@ -964,39 +969,104 @@ class _DynamicGuidePainter extends CustomPainter {
 
   void _paintSlopeTriangle({
     required Canvas canvas,
-    required Offset origin,
+    required Offset rafterStart,
+    required Offset rafterEnd,
     required String pitchText,
     required bool isActive,
     required double pulseFactor,
   }) {
     final color = isActive ? AppColors.brandGold : const Color(0xFF64748B);
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = isActive ? 2.5 : 1.2
-      ..style = PaintingStyle.stroke;
 
-    const triW = 32.0;
-    const triH = 16.0;
+    final dx = rafterEnd.dx - rafterStart.dx;
+    final dy = rafterStart.dy - rafterEnd.dy; // positive vertical rise
+    final slope = dx > 0 ? (dy / dx) : 0.6;
 
+    // Midpoint along the left rafter
+    final mid = Offset(
+      (rafterStart.dx + rafterEnd.dx) * 0.5,
+      (rafterStart.dy + rafterEnd.dy) * 0.5,
+    );
+
+    const triW = 34.0;
+    final triH = triW * slope; // exactly matches the rafter slope
+
+    // Anchor P0 sits cleanly above the rafter
+    final p0 = Offset(mid.dx - triW * 0.5 - 4, mid.dy - triH - 8);
+    final p1 = Offset(p0.dx + triW, p0.dy);          // Horizontal top leg
+    final p2 = Offset(p0.dx + triW, p0.dy + triH);   // Vertical right leg
+
+    // Triangle Path: P0 -> P1 -> P2 -> P0 (Hypotenuse from P2 to P0 is parallel to rafter)
     final path = Path()
-      ..moveTo(origin.dx, origin.dy)
-      ..lineTo(origin.dx + triW, origin.dy)
-      ..lineTo(origin.dx + triW, origin.dy - triH)
+      ..moveTo(p0.dx, p0.dy)
+      ..lineTo(p1.dx, p1.dy)
+      ..lineTo(p2.dx, p2.dy)
       ..close();
 
-    canvas.drawPath(path, paint);
+    // Subtle fill when active
+    if (isActive) {
+      final fillPaint = Paint()
+        ..color = AppColors.brandGold.withValues(alpha: 0.12 + 0.08 * pulseFactor)
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(path, fillPaint);
+    }
 
+    final strokePaint = Paint()
+      ..color = color
+      ..strokeWidth = isActive ? 2.2 : 1.2
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(path, strokePaint);
+
+    // Right-angle square indicator at P1
+    const sqSize = 5.0;
+    final sqPath = Path()
+      ..moveTo(p1.dx - sqSize, p1.dy)
+      ..lineTo(p1.dx - sqSize, p1.dy + sqSize)
+      ..lineTo(p1.dx, p1.dy + sqSize);
+    canvas.drawPath(sqPath, strokePaint..strokeWidth = 1.0);
+
+    // Pitch Badge (e.g. 6:12) centered above the horizontal leg
     final textSpan = TextSpan(
       text: pitchText,
       style: TextStyle(
-        color: color,
-        fontSize: isActive ? 12 : 10,
+        color: isActive ? AppColors.brandGold : const Color(0xFF94A3B8),
+        fontSize: isActive ? 12.5 : 10.0,
         fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+        letterSpacing: 0.4,
       ),
     );
 
     final tp = TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
-    tp.paint(canvas, Offset(origin.dx + 4, origin.dy - triH - 16));
+    final badgeCenter = Offset(p0.dx + triW * 0.5, p0.dy - 12);
+
+    final badgeRect = Rect.fromCenter(
+      center: badgeCenter,
+      width: tp.width + (isActive ? 16 : 8),
+      height: tp.height + (isActive ? 6 : 4),
+    );
+
+    if (isActive) {
+      final glowBadge = Paint()
+        ..color = AppColors.brandGold.withValues(alpha: 0.15 + 0.1 * pulseFactor)
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(RRect.fromRectAndRadius(badgeRect.inflate(3), const Radius.circular(6)), glowBadge);
+    }
+
+    final bgBadge = Paint()
+      ..color = isActive
+          ? AppColors.bgSurface.withValues(alpha: 0.95)
+          : const Color(0xFF0F172A).withValues(alpha: 0.85)
+      ..style = PaintingStyle.fill;
+    final borderBadge = Paint()
+      ..color = isActive
+          ? AppColors.brandGold.withValues(alpha: 0.8 + 0.2 * pulseFactor)
+          : const Color(0xFF334155)
+      ..strokeWidth = isActive ? 1.6 : 0.8
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(4)), bgBadge);
+    canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(4)), borderBadge);
+
+    tp.paint(canvas, Offset(badgeCenter.dx - tp.width * 0.5, badgeCenter.dy - tp.height * 0.5));
   }
 
   @override
