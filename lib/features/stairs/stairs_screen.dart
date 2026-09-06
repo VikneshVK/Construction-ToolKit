@@ -43,6 +43,8 @@ class _StairsScreenState extends State<StairsScreen> {
 
   StairResult? _stairResult;
 
+  String _activeStairDim = 'rise';
+
   @override
   void initState() {
     super.initState();
@@ -103,26 +105,26 @@ class _StairsScreenState extends State<StairsScreen> {
 
     LocalStorageService.instance.addCalculation(SavedCalculation(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: 'Stairs: ${_stairResult!.numberOfRisers} Steps',
+      title: 'Stair Layout (${_stairResult!.numberOfRisers} Risers)',
       category: 'stairs',
-      primaryResult: '${_stairResult!.numberOfRisers} Steps @ $riserFormatted',
-      subtitle: '${_stairResult!.numberOfTreads} Treads @ $treadFormatted | Stringer: $stringerFormatted',
+      primaryResult: '${_stairResult!.numberOfRisers} Risers @ $riserFormatted',
+      subtitle: '${_stairResult!.numberOfTreads} Treads @ $treadFormatted | Incline: ${_stairResult!.inclineAngleDegrees.toStringAsFixed(1)}°',
       inputs: {
-        'Rise': isMetric ? '${_riseMmCtrl.text} mm' : '${_riseFeetCtrl.text}\' ${_riseFraction.toMixedString()}"',
+        'Total Rise': isMetric ? '${_riseMmCtrl.text} mm' : '${_riseFeetCtrl.text}\' ${_riseFraction.toMixedString()}"',
         'Mode': _solveMode.label,
-        'System': isMetric ? 'Metric' : 'Imperial',
       },
       details: [
-        'Total Run: ${isMetric ? "${_stairResult!.totalRun.toMeters().toStringAsFixed(3)} m" : _stairResult!.totalRun.toFeetInchesFraction()}',
-        'Incline Angle: ${_stairResult!.inclineAngleDegrees.toStringAsFixed(1)}°',
-        'Code Status: ${_stairResult!.codeReport.status.name.toUpperCase()}',
+        'Diagonal Stringer: $stringerFormatted',
+        'Total Horizontal Run: ${isMetric ? "${_stairResult!.totalRun.toMeters().toStringAsFixed(3)} m" : _stairResult!.totalRun.toFeetInchesFraction()}',
+        'Stride Comfort (2R+T): ${((2 * _stairResult!.riserHeight.toInches()) + _stairResult!.treadDepth.toInches()).toStringAsFixed(2)}"',
+        'IRC Compliance: ${_stairResult!.codeReport.status == StairCodeStatus.pass ? "Passed" : "Non-Compliant"}',
       ],
       timestamp: DateTime.now(),
     ));
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Stair configuration saved to project log!'),
+        content: Text('Stair calculation saved to project history!'),
         backgroundColor: AppColors.bgElevated,
         duration: Duration(seconds: 2),
       ),
@@ -136,9 +138,19 @@ class _StairsScreenState extends State<StairsScreen> {
       builder: (context, _) {
         final isMetric = UnitSettings.instance.isMetric;
 
+        final riseValueStr = isMetric
+            ? '${_riseMmCtrl.text} mm'
+            : '${_riseFeetCtrl.text}\' ${_riseFraction.toMixedString()}"';
+        final treadValueStr = isMetric
+            ? '${_preferredTreadMmCtrl.text} mm'
+            : '${_preferredTreadCtrl.text}"';
+        final runValueStr = isMetric
+            ? '${_availableRunMetersCtrl.text} m'
+            : '${_availableRunFeetCtrl.text} ft';
+
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Stair Steps & Safety Check'),
+            title: const Text('Stairs & Handrails'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings_outlined),
@@ -153,7 +165,16 @@ class _StairsScreenState extends State<StairsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const VisualMeasurementGuide(type: MeasurementGuideType.stairs),
+                  VisualMeasurementGuide(
+                    type: MeasurementGuideType.stairs,
+                    activeDimension: _activeStairDim,
+                    values: {
+                      'rise': riseValueStr,
+                      'tread': treadValueStr,
+                      'run': runValueStr,
+                    },
+                    onDimensionSelected: (dim) => setState(() => _activeStairDim = dim),
+                  ),
                   const SizedBox(height: AppSpacing.md),
 
                   // Quick ceiling height presets
@@ -168,6 +189,7 @@ class _StairsScreenState extends State<StairsScreen> {
                             _riseFeetCtrl.text = '8';
                             _riseFraction = Fraction.zero;
                           }
+                          _activeStairDim = 'rise';
                           _recalculate();
                         }),
                         const SizedBox(width: 6),
@@ -178,6 +200,7 @@ class _StairsScreenState extends State<StairsScreen> {
                             _riseFeetCtrl.text = '9';
                             _riseFraction = Fraction.zero;
                           }
+                          _activeStairDim = 'rise';
                           _recalculate();
                         }),
                         const SizedBox(width: 6),
@@ -188,6 +211,7 @@ class _StairsScreenState extends State<StairsScreen> {
                             _riseFeetCtrl.text = '6';
                             _riseFraction = Fraction.zero;
                           }
+                          _activeStairDim = 'rise';
                           _recalculate();
                         }),
                       ],
@@ -222,6 +246,10 @@ class _StairsScreenState extends State<StairsScreen> {
                       infoDescription: 'Vertical distance from the bottom finished floor to the top finished landing floor.',
                       infoTip: 'Use a laser measure or tape vertically. Include the thickness of top floor decking.',
                       infoTradeTerm: 'Total Rise (Story Height)',
+                      onTap: () => setState(() => _activeStairDim = 'rise'),
+                      onFocusChange: (f) {
+                        if (f) setState(() => _activeStairDim = 'rise');
+                      },
                       onChanged: (_) => _recalculate(),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -233,6 +261,10 @@ class _StairsScreenState extends State<StairsScreen> {
                         infoDescription: 'Horizontal depth where your foot lands on each step.',
                         infoTip: 'Standard comfortable depth is 250 mm to 280 mm (10" - 11").',
                         infoTradeTerm: 'Unit Tread Depth',
+                        onTap: () => setState(() => _activeStairDim = 'tread'),
+                        onFocusChange: (f) {
+                          if (f) setState(() => _activeStairDim = 'tread');
+                        },
                         onChanged: (_) => _recalculate(),
                       )
                     else
@@ -242,6 +274,10 @@ class _StairsScreenState extends State<StairsScreen> {
                         controller: _availableRunMetersCtrl,
                         infoDescription: 'Total horizontal space available on the lower floor for the stairs to land.',
                         infoTradeTerm: 'Total Run Opening',
+                        onTap: () => setState(() => _activeStairDim = 'run'),
+                        onFocusChange: (f) {
+                          if (f) setState(() => _activeStairDim = 'run');
+                        },
                         onChanged: (_) => _recalculate(),
                       ),
                   ] else ...[
@@ -251,6 +287,10 @@ class _StairsScreenState extends State<StairsScreen> {
                       controller: _riseFeetCtrl,
                       infoDescription: 'Vertical height from bottom floor to top landing.',
                       infoTradeTerm: 'Total Rise',
+                      onTap: () => setState(() => _activeStairDim = 'rise'),
+                      onFocusChange: (f) {
+                        if (f) setState(() => _activeStairDim = 'rise');
+                      },
                       onChanged: (_) => _recalculate(),
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -259,7 +299,10 @@ class _StairsScreenState extends State<StairsScreen> {
                     BuildCalcFractionBar(
                       selectedFraction: _riseFraction,
                       onFractionSelected: (frac) {
-                        setState(() => _riseFraction = frac);
+                        setState(() {
+                          _riseFraction = frac;
+                          _activeStairDim = 'rise';
+                        });
                         _recalculate();
                       },
                     ),
@@ -271,6 +314,10 @@ class _StairsScreenState extends State<StairsScreen> {
                         controller: _preferredTreadCtrl,
                         infoDescription: 'Horizontal depth where your foot lands on each step (10" is standard).',
                         infoTradeTerm: 'Unit Tread Depth',
+                        onTap: () => setState(() => _activeStairDim = 'tread'),
+                        onFocusChange: (f) {
+                          if (f) setState(() => _activeStairDim = 'tread');
+                        },
                         onChanged: (_) => _recalculate(),
                       )
                     else
@@ -280,6 +327,10 @@ class _StairsScreenState extends State<StairsScreen> {
                         controller: _availableRunFeetCtrl,
                         infoDescription: 'Total horizontal space available on the lower floor.',
                         infoTradeTerm: 'Available Total Run',
+                        onTap: () => setState(() => _activeStairDim = 'run'),
+                        onFocusChange: (f) {
+                          if (f) setState(() => _activeStairDim = 'run');
+                        },
                         onChanged: (_) => _recalculate(),
                       ),
                   ],

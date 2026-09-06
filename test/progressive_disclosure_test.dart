@@ -68,5 +68,27 @@ void main() {
 
     expect(find.text('IRC 2024 Building Safety Code (§R311.7)'), findsOneWidget);
     expect(find.text("Blondel's Rule of Comfort"), findsOneWidget);
+
+    // Close settings dialog
+    await tester.tap(find.text('Apply Settings'));
+    await tester.pumpAndSettle();
+
+    // 4. Navigate to Materials and test Dynamic Measurement Guide
+    await tester.tap(find.text('Materials').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VisualMeasurementGuide), findsOneWidget);
+    expect(find.text('Concrete Slab Guide'), findsOneWidget);
+    expect(find.text('Length (L)'), findsOneWidget);
+
+    // Tap Width chip on the dynamic guide
+    await tester.tap(find.textContaining('Width').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Width (W)'), findsOneWidget);
+
+    // Tap Thickness chip on the dynamic guide
+    await tester.tap(find.textContaining('Thickness').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Thickness (Depth)'), findsOneWidget);
   });
 }

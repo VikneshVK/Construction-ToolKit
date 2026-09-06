@@ -52,6 +52,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   double _masonryWaste = 10.0;
   MasonryResult? _masonryResult;
 
+  // --- Dynamic Active Dimension State ---
+  String _activeConcreteDim = 'length';
+  String _activeMasonryDim = 'wallLength';
+
   @override
   void initState() {
     super.initState();
@@ -83,63 +87,97 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
   void _recalculateConcrete() {
     final isMetric = UnitSettings.instance.isMetric;
-    final d1 = double.tryParse(_concDim1Ctrl.text) ?? (isMetric ? 7.5 : 24.0);
-    final d2 = double.tryParse(_concDim2Ctrl.text) ?? (isMetric ? 3.5 : 12.0);
-    final d3 = double.tryParse(_concDim3Ctrl.text) ?? (isMetric ? 10.0 : 4.0);
+    final d1 = double.tryParse(_concDim1Ctrl.text) ?? 0.0;
+    final d2 = double.tryParse(_concDim2Ctrl.text) ?? 0.0;
+    final d3 = double.tryParse(_concDim3Ctrl.text) ?? 0.0;
 
     ConcreteResult res;
-    switch (_concreteType) {
-      case ConcreteStructureType.slab:
-        res = ConcreteMath.calculateSlab(
-          length: isMetric ? Length.fromMeters(d1) : Length.fromFeet(d1),
-          width: isMetric ? Length.fromMeters(d2) : Length.fromFeet(d2),
-          thickness: isMetric ? Length.fromMillimeters(d3 * 10) : Length.fromInches(d3),
-          wastePercent: _concWaste,
-        );
-        break;
-      case ConcreteStructureType.footing:
-        res = ConcreteMath.calculateFooting(
-          length: isMetric ? Length.fromMeters(d1) : Length.fromFeet(d1),
-          width: isMetric ? Length.fromMillimeters(d2 * 10) : Length.fromInches(d2),
-          depth: isMetric ? Length.fromMillimeters(d3 * 10) : Length.fromInches(d3),
-          wastePercent: _concWaste,
-        );
-        break;
-      case ConcreteStructureType.column:
-        res = ConcreteMath.calculateColumn(
-          diameter: isMetric ? Length.fromMillimeters(d1 * 10) : Length.fromInches(d1),
-          height: isMetric ? Length.fromMeters(d2) : Length.fromFeet(d2),
-          quantity: d3.toInt().clamp(1, 100),
-          wastePercent: _concWaste,
-        );
-        break;
-      case ConcreteStructureType.wall:
-        res = ConcreteMath.calculateWall(
-          length: isMetric ? Length.fromMeters(d1) : Length.fromFeet(d1),
-          height: isMetric ? Length.fromMeters(d2) : Length.fromFeet(d2),
-          thickness: isMetric ? Length.fromMillimeters(d3 * 10) : Length.fromInches(d3),
-          wastePercent: _concWaste,
-        );
-        break;
+    if (isMetric) {
+      switch (_concreteType) {
+        case ConcreteStructureType.slab:
+          res = ConcreteMath.calculateSlab(
+            length: Length.fromMeters(d1),
+            width: Length.fromMeters(d2),
+            thickness: Length.fromCentimeters(d3),
+            wastePercent: _concWaste,
+          );
+          break;
+        case ConcreteStructureType.footing:
+          res = ConcreteMath.calculateFooting(
+            length: Length.fromMeters(d1),
+            width: Length.fromCentimeters(d2),
+            depth: Length.fromCentimeters(d3),
+            wastePercent: _concWaste,
+          );
+          break;
+        case ConcreteStructureType.column:
+          res = ConcreteMath.calculateColumn(
+            diameter: Length.fromCentimeters(d1),
+            height: Length.fromMeters(d2),
+            quantity: d3.toInt() > 0 ? d3.toInt() : 1,
+            wastePercent: _concWaste,
+          );
+          break;
+        case ConcreteStructureType.wall:
+          res = ConcreteMath.calculateWall(
+            length: Length.fromMeters(d1),
+            height: Length.fromMeters(d2),
+            thickness: Length.fromCentimeters(d3),
+            wastePercent: _concWaste,
+          );
+          break;
+      }
+    } else {
+      switch (_concreteType) {
+        case ConcreteStructureType.slab:
+          res = ConcreteMath.calculateSlab(
+            length: Length.fromFeet(d1),
+            width: Length.fromFeet(d2),
+            thickness: Length.fromInches(d3),
+            wastePercent: _concWaste,
+          );
+          break;
+        case ConcreteStructureType.footing:
+          res = ConcreteMath.calculateFooting(
+            length: Length.fromFeet(d1),
+            width: Length.fromInches(d2),
+            depth: Length.fromInches(d3),
+            wastePercent: _concWaste,
+          );
+          break;
+        case ConcreteStructureType.column:
+          res = ConcreteMath.calculateColumn(
+            diameter: Length.fromInches(d1),
+            height: Length.fromFeet(d2),
+            quantity: d3.toInt() > 0 ? d3.toInt() : 1,
+            wastePercent: _concWaste,
+          );
+          break;
+        case ConcreteStructureType.wall:
+          res = ConcreteMath.calculateWall(
+            length: Length.fromFeet(d1),
+            height: Length.fromFeet(d2),
+            thickness: Length.fromInches(d3),
+            wastePercent: _concWaste,
+          );
+          break;
+      }
     }
 
     setState(() => _concreteResult = res);
   }
 
   void _recalculateLumber() {
-    final isMetric = UnitSettings.instance.isMetric;
-    final len = double.tryParse(_lumberLengthCtrl.text) ?? (isMetric ? 3.6 : 12.0);
-    final qty = int.tryParse(_lumberQtyCtrl.text) ?? 1;
-    final cost = double.tryParse(_lumberCostCtrl.text);
-
-    final lengthObj = isMetric ? Length.fromMeters(len) : Length.fromFeet(len);
+    final l = double.tryParse(_lumberLengthCtrl.text) ?? 12.0;
+    final q = int.tryParse(_lumberQtyCtrl.text) ?? 20;
+    final c = double.tryParse(_lumberCostCtrl.text) ?? 1.25;
 
     final res = FramingMath.calculateBoardFeet(
       nominalThicknessInches: _selectedLumber.actualThicknessInches == 1.5 ? 2.0 : (_selectedLumber.actualThicknessInches == 3.5 ? 4.0 : 1.0),
       nominalWidthInches: _selectedLumber.actualWidthInches == 3.5 ? 4.0 : (_selectedLumber.actualWidthInches == 5.5 ? 6.0 : 8.0),
-      length: lengthObj,
-      quantity: qty,
-      costPerBoardFoot: cost,
+      length: (UnitSettings.instance.isMetric ? Length.fromMeters(l) : Length.fromFeet(l)),
+      quantity: q,
+      costPerBoardFoot: c,
     );
 
     setState(() => _boardFeetResult = res);
@@ -233,10 +271,47 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     final totalCuFt = _concreteResult != null ? _concreteResult!.grossVolume.toCubicFeet() : 0.0;
     final bagCount = (totalCuFt / 0.6).ceil();
 
+    MeasurementGuideType guideType = MeasurementGuideType.slab;
+    Map<String, String> guideVals = {};
+
+    if (_concreteType == ConcreteStructureType.slab) {
+      guideType = MeasurementGuideType.slab;
+      guideVals = {
+        'length': '${_concDim1Ctrl.text} $lenUnit',
+        'width': '${_concDim2Ctrl.text} $lenUnit',
+        'thickness': '${_concDim3Ctrl.text} $thickUnit',
+      };
+    } else if (_concreteType == ConcreteStructureType.footing) {
+      guideType = MeasurementGuideType.footing;
+      guideVals = {
+        'length': '${_concDim1Ctrl.text} $lenUnit',
+        'width': '${_concDim2Ctrl.text} $thickUnit',
+        'depth': '${_concDim3Ctrl.text} $thickUnit',
+      };
+    } else if (_concreteType == ConcreteStructureType.column) {
+      guideType = MeasurementGuideType.column;
+      guideVals = {
+        'diameter': '${_concDim1Ctrl.text} $thickUnit',
+        'height': '${_concDim2Ctrl.text} $lenUnit',
+      };
+    } else {
+      guideType = MeasurementGuideType.slab;
+      guideVals = {
+        'length': '${_concDim1Ctrl.text} $lenUnit',
+        'width': '${_concDim2Ctrl.text} $lenUnit',
+        'thickness': '${_concDim3Ctrl.text} $thickUnit',
+      };
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const VisualMeasurementGuide(type: MeasurementGuideType.slab),
+        VisualMeasurementGuide(
+          type: guideType,
+          activeDimension: _activeConcreteDim,
+          values: guideVals,
+          onDimensionSelected: (dim) => setState(() => _activeConcreteDim = dim),
+        ),
         const SizedBox(height: AppSpacing.md),
 
         BuildCalcTabSelector<ConcreteStructureType>(
@@ -244,7 +319,14 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           selectedItem: _concreteType,
           labelBuilder: (t) => t.label,
           onSelected: (t) {
-            setState(() => _concreteType = t);
+            setState(() {
+              _concreteType = t;
+              if (t == ConcreteStructureType.column) {
+                _activeConcreteDim = 'diameter';
+              } else {
+                _activeConcreteDim = 'length';
+              }
+            });
             _recalculateConcrete();
           },
         ),
@@ -258,16 +340,19 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               children: [
                 _buildPresetChip('Walkway / Patio (10cm / 4")', () {
                   _concDim3Ctrl.text = isMetric ? '10' : '4';
+                  _activeConcreteDim = 'thickness';
                   _recalculateConcrete();
                 }),
                 const SizedBox(width: 6),
                 _buildPresetChip('Driveway / Garage (15cm / 6")', () {
                   _concDim3Ctrl.text = isMetric ? '15' : '6';
+                  _activeConcreteDim = 'thickness';
                   _recalculateConcrete();
                 }),
                 const SizedBox(width: 6),
                 _buildPresetChip('Heavy Base (20cm / 8")', () {
                   _concDim3Ctrl.text = isMetric ? '20' : '8';
+                  _activeConcreteDim = 'thickness';
                   _recalculateConcrete();
                 }),
               ],
@@ -287,6 +372,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   infoDescription: 'The longest horizontal side of your pour area.',
                   infoTip: 'Measure with a tape along the form boards from corner to corner.',
                   infoTradeTerm: 'Slab Length (L)',
+                  onTap: () => setState(() => _activeConcreteDim = 'length'),
+                  onFocusChange: (f) {
+                    if (f) setState(() => _activeConcreteDim = 'length');
+                  },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
               ),
@@ -299,6 +388,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   infoDescription: 'The shorter side of your rectangular pour area.',
                   infoTip: 'Measure perpendicular across from form board to form board.',
                   infoTradeTerm: 'Slab Width (W)',
+                  onTap: () => setState(() => _activeConcreteDim = 'width'),
+                  onFocusChange: (f) {
+                    if (f) setState(() => _activeConcreteDim = 'width');
+                  },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
               ),
@@ -312,6 +405,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             infoDescription: 'How deep the concrete slab will be poured.',
             infoTip: 'Standard patio/walkway is 4" (10 cm). Vehicle driveways require 6" (15 cm).',
             infoTradeTerm: 'Slab Thickness / Depth (T)',
+            onTap: () => setState(() => _activeConcreteDim = 'thickness'),
+            onFocusChange: (f) {
+              if (f) setState(() => _activeConcreteDim = 'thickness');
+            },
             onChanged: (_) => _recalculateConcrete(),
           ),
         ] else if (_concreteType == ConcreteStructureType.footing) ...[
@@ -322,6 +419,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             infoDescription: 'Total continuous length of your foundation footing trench.',
             infoTip: 'Add up the lengths of all outer foundation perimeter walls.',
             infoTradeTerm: 'Footing Run',
+            onTap: () => setState(() => _activeConcreteDim = 'length'),
+            onFocusChange: (f) {
+              if (f) setState(() => _activeConcreteDim = 'length');
+            },
             onChanged: (_) => _recalculateConcrete(),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -334,6 +435,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   controller: _concDim2Ctrl,
                   infoDescription: 'Horizontal width across the dug footing trench.',
                   infoTradeTerm: 'Footing Width',
+                  onTap: () => setState(() => _activeConcreteDim = 'width'),
+                  onFocusChange: (f) {
+                    if (f) setState(() => _activeConcreteDim = 'width');
+                  },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
               ),
@@ -345,6 +450,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   controller: _concDim3Ctrl,
                   infoDescription: 'Vertical depth of concrete poured into the trench.',
                   infoTradeTerm: 'Footing Thickness / Depth',
+                  onTap: () => setState(() => _activeConcreteDim = 'depth'),
+                  onFocusChange: (f) {
+                    if (f) setState(() => _activeConcreteDim = 'depth');
+                  },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
               ),
@@ -361,6 +470,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   infoDescription: 'Width across the circular Sonotube form or hole.',
                   infoTip: 'Standard deck pier tubes are 8", 10", or 12" (20-30 cm).',
                   infoTradeTerm: 'Column Diameter (Ø)',
+                  onTap: () => setState(() => _activeConcreteDim = 'diameter'),
+                  onFocusChange: (f) {
+                    if (f) setState(() => _activeConcreteDim = 'diameter');
+                  },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
               ),
@@ -373,6 +486,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   infoDescription: 'Total depth from ground base to top of pier.',
                   infoTip: 'Must extend below your local winter frost line.',
                   infoTradeTerm: 'Pier Depth / Height',
+                  onTap: () => setState(() => _activeConcreteDim = 'height'),
+                  onFocusChange: (f) {
+                    if (f) setState(() => _activeConcreteDim = 'height');
+                  },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
               ),
@@ -395,6 +512,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   unit: lenUnit,
                   controller: _concDim1Ctrl,
                   infoDescription: 'Length of the poured concrete wall.',
+                  onTap: () => setState(() => _activeConcreteDim = 'length'),
+                  onFocusChange: (f) {
+                    if (f) setState(() => _activeConcreteDim = 'length');
+                  },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
               ),
@@ -405,6 +526,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   unit: lenUnit,
                   controller: _concDim2Ctrl,
                   infoDescription: 'Vertical height of the wall.',
+                  onTap: () => setState(() => _activeConcreteDim = 'width'),
+                  onFocusChange: (f) {
+                    if (f) setState(() => _activeConcreteDim = 'width');
+                  },
                   onChanged: (_) => _recalculateConcrete(),
                 ),
               ),
@@ -415,8 +540,11 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             label: 'Wall Thickness',
             unit: thickUnit,
             controller: _concDim3Ctrl,
-            infoDescription: 'Thickness of the wall forms.',
-            infoTradeTerm: 'Stem Wall Thickness',
+            infoDescription: 'Thickness of the poured foundation wall.',
+            onTap: () => setState(() => _activeConcreteDim = 'thickness'),
+            onFocusChange: (f) {
+              if (f) setState(() => _activeConcreteDim = 'thickness');
+            },
             onChanged: (_) => _recalculateConcrete(),
           ),
         ],
@@ -628,10 +756,22 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
   Widget _buildMasonryTab(bool isMetric) {
     final areaSqMeters = (_masonryResult != null) ? _masonryResult!.wallSquareFeet * 0.092903 : 0.0;
+    final lengthUnit = isMetric ? 'm' : 'ft';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        VisualMeasurementGuide(
+          type: MeasurementGuideType.masonry,
+          activeDimension: _activeMasonryDim,
+          values: {
+            'wallLength': '${_wallLengthCtrl.text} $lengthUnit',
+            'wallHeight': '${_wallHeightCtrl.text} $lengthUnit',
+          },
+          onDimensionSelected: (dim) => setState(() => _activeMasonryDim = dim),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
         Row(
           children: [
             const Text('Cinder Block / Brick Style', style: AppTypography.fieldLabel),
@@ -678,9 +818,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             Expanded(
               child: BuildCalcInput(
                 label: 'Wall Length',
-                unit: isMetric ? 'm' : 'ft',
+                unit: lengthUnit,
                 controller: _wallLengthCtrl,
                 infoDescription: 'Total horizontal length of the block or brick wall.',
+                onTap: () => setState(() => _activeMasonryDim = 'wallLength'),
+                onFocusChange: (f) {
+                  if (f) setState(() => _activeMasonryDim = 'wallLength');
+                },
                 onChanged: (_) => _recalculateMasonry(),
               ),
             ),
@@ -688,9 +832,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             Expanded(
               child: BuildCalcInput(
                 label: 'Wall Height',
-                unit: isMetric ? 'm' : 'ft',
+                unit: lengthUnit,
                 controller: _wallHeightCtrl,
                 infoDescription: 'Vertical height from footing base to top course.',
+                onTap: () => setState(() => _activeMasonryDim = 'wallHeight'),
+                onFocusChange: (f) {
+                  if (f) setState(() => _activeMasonryDim = 'wallHeight');
+                },
                 onChanged: (_) => _recalculateMasonry(),
               ),
             ),

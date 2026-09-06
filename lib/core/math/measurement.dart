@@ -26,6 +26,7 @@ class Length {
   factory Length.fromFeet(double feet) => Length.fromInches(feet * 12.0);
   factory Length.fromYards(double yards) => Length.fromInches(yards * 36.0);
   factory Length.fromMillimeters(double mm) => Length.fromInches(mm / 25.4);
+  factory Length.fromCentimeters(double cm) => Length.fromInches((cm * 10.0) / 25.4);
   factory Length.fromMeters(double m) => Length.fromInches(m * 1000.0 / 25.4);
   factory Length.fromFeetAndInches(int feet, Fraction inches) {
     return Length.fromInches(feet * 12.0 + inches.toDouble());
@@ -37,6 +38,7 @@ class Length {
   double toFeet() => totalInches / 12.0;
   double toYards() => totalInches / 36.0;
   double toMillimeters() => totalInches * 25.4;
+  double toCentimeters() => (totalInches * 25.4) / 10.0;
   double toMeters() => (totalInches * 25.4) / 1000.0;
 
   double as(LengthUnit unit) => totalInches / unit.inchesMultiplier;

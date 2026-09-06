@@ -38,6 +38,8 @@ class _RoofingScreenState extends State<RoofingScreen> {
   RafterResult? _rafterResult;
   List<JackRafterResult> _jackResults = [];
 
+  String _activeRoofDim = 'run';
+
   @override
   void initState() {
     super.initState();
@@ -64,11 +66,14 @@ class _RoofingScreenState extends State<RoofingScreen> {
     final pitchRise = double.tryParse(_pitchCtrl.text) ?? 4.0;
     final overhangVal = double.tryParse(_overhangCtrl.text) ?? (isMetric ? 30.0 : 12.0);
 
+    final run = isMetric ? Length.fromMeters(runVal) : Length.fromFeet(runVal);
     final pitch = RoofPitch(pitchRise);
+    final overhang = isMetric ? Length.fromMillimeters(overhangVal * 10) : Length.fromInches(overhangVal);
+
     final rafter = RoofingMath.solveCommonRafter(
-      run: isMetric ? Length.fromMeters(runVal) : Length.fromFeet(runVal),
+      run: run,
       pitch: pitch,
-      overhangRun: isMetric ? Length.fromMillimeters(overhangVal * 10) : Length.fromInches(overhangVal),
+      overhangRun: overhang,
     );
 
     final jacks = RoofingMath.calculateJackRafters(
@@ -89,7 +94,7 @@ class _RoofingScreenState extends State<RoofingScreen> {
     final isMetric = UnitSettings.instance.isMetric;
 
     final primaryStr = isMetric
-        ? '${_rafterResult!.commonRafterLength.toMeters().toStringAsFixed(3)} m (${_rafterResult!.commonRafterLength.toMillimeters().toStringAsFixed(0)} mm)'
+        ? '${_rafterResult!.commonRafterLength.toMeters().toStringAsFixed(3)} m (${_rafterResult!.commonRafterLength.toFeetInchesFraction()})'
         : _rafterResult!.commonRafterLength.toFeetInchesFraction();
 
     final totalStr = isMetric
@@ -148,7 +153,16 @@ class _RoofingScreenState extends State<RoofingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const VisualMeasurementGuide(type: MeasurementGuideType.roof),
+                  VisualMeasurementGuide(
+                    type: MeasurementGuideType.roof,
+                    activeDimension: _activeRoofDim,
+                    values: {
+                      'run': '${_runFeetCtrl.text} ${isMetric ? "m" : "ft"}',
+                      'pitch': _pitchCtrl.text,
+                      'overhang': '${_overhangCtrl.text} ${isMetric ? "cm" : "in"}',
+                    },
+                    onDimensionSelected: (dim) => setState(() => _activeRoofDim = dim),
+                  ),
                   const SizedBox(height: AppSpacing.md),
 
                   // Quick slope presets
@@ -158,16 +172,19 @@ class _RoofingScreenState extends State<RoofingScreen> {
                       children: [
                         _buildPresetChip('Gentle Slope (4/12 · 18°)', () {
                           _pitchCtrl.text = '4';
+                          _activeRoofDim = 'pitch';
                           _recalculate();
                         }),
                         const SizedBox(width: 6),
                         _buildPresetChip('Standard Roof (6/12 · 26°)', () {
                           _pitchCtrl.text = '6';
+                          _activeRoofDim = 'pitch';
                           _recalculate();
                         }),
                         const SizedBox(width: 6),
                         _buildPresetChip('Steep Gable (8/12 · 34°)', () {
                           _pitchCtrl.text = '8';
+                          _activeRoofDim = 'pitch';
                           _recalculate();
                         }),
                       ],
@@ -201,6 +218,10 @@ class _RoofingScreenState extends State<RoofingScreen> {
                           infoDescription: 'The horizontal distance from the outside of your exterior wall to the center roof ridge beam.',
                           infoTip: 'This is half the total building width if you have a centered gable roof.',
                           infoTradeTerm: 'Horizontal Run (R)',
+                          onTap: () => setState(() => _activeRoofDim = 'run'),
+                          onFocusChange: (f) {
+                            if (f) setState(() => _activeRoofDim = 'run');
+                          },
                           onChanged: (_) => _recalculate(),
                         ),
                       ),
@@ -212,6 +233,10 @@ class _RoofingScreenState extends State<RoofingScreen> {
                           controller: _pitchCtrl,
                           infoDescription: 'How steep the roof is. A 4/12 pitch rises 4 inches vertically for every 12 inches of horizontal run.',
                           infoTradeTerm: 'Roof Pitch (Slope)',
+                          onTap: () => setState(() => _activeRoofDim = 'pitch'),
+                          onFocusChange: (f) {
+                            if (f) setState(() => _activeRoofDim = 'pitch');
+                          },
                           onChanged: (_) => _recalculate(),
                         ),
                       ),
@@ -225,6 +250,10 @@ class _RoofingScreenState extends State<RoofingScreen> {
                     infoDescription: 'How far the roof extends past the outer wall to keep rain away from siding.',
                     infoTip: 'Standard overhang is 12" (30 cm).',
                     infoTradeTerm: 'Eaves Overhang Run',
+                    onTap: () => setState(() => _activeRoofDim = 'overhang'),
+                    onFocusChange: (f) {
+                      if (f) setState(() => _activeRoofDim = 'overhang');
+                    },
                     onChanged: (_) => _recalculate(),
                   ),
                   const SizedBox(height: AppSpacing.lg),

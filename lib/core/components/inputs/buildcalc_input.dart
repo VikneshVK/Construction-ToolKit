@@ -17,6 +17,8 @@ class BuildCalcInput extends StatelessWidget {
   final TextInputType keyboardType;
   final Widget? trailing;
   final FocusNode? focusNode;
+  final VoidCallback? onTap;
+  final ValueChanged<bool>? onFocusChange;
   final String? infoDescription;
   final String? infoTip;
   final String? infoTradeTerm;
@@ -32,6 +34,8 @@ class BuildCalcInput extends StatelessWidget {
     this.keyboardType = const TextInputType.numberWithOptions(decimal: true, signed: false),
     this.trailing,
     this.focusNode,
+    this.onTap,
+    this.onFocusChange,
     this.infoDescription,
     this.infoTip,
     this.infoTradeTerm,
@@ -83,43 +87,47 @@ class BuildCalcInput extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
-        Container(
-          height: AppSpacing.inputFieldHeight,
-          decoration: BoxDecoration(
-            color: AppColors.bgInput,
-            borderRadius: AppRadii.inputRadius,
-            border: Border.all(
-              color: errorText != null
-                  ? AppColors.statusError
-                  : AppColors.borderSubtle,
-              width: 1.0,
+        Focus(
+          onFocusChange: onFocusChange,
+          child: Container(
+            height: AppSpacing.inputFieldHeight,
+            decoration: BoxDecoration(
+              color: AppColors.bgInput,
+              borderRadius: AppRadii.inputRadius,
+              border: Border.all(
+                color: errorText != null
+                    ? AppColors.statusError
+                    : AppColors.borderSubtle,
+                width: 1.0,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  keyboardType: keyboardType,
-                  onChanged: onChanged,
-                  style: AppTypography.inputText,
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: AppTypography.helperText,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    keyboardType: keyboardType,
+                    onChanged: onChanged,
+                    onTap: onTap,
+                    style: AppTypography.inputText,
+                    decoration: InputDecoration(
+                      hintText: hint,
+                      hintStyle: AppTypography.helperText,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                    ),
                   ),
                 ),
-              ),
-              if (trailing != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: trailing!,
-                ),
-            ],
+                if (trailing != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: trailing!,
+                  ),
+              ],
+            ),
           ),
         ),
         if (errorText != null) ...[
