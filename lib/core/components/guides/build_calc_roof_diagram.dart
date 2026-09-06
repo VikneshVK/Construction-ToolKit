@@ -377,6 +377,7 @@ class _ModeExplanation {
   });
 }
 
+/// CustomPainter rendering proportional roof geometry and active mode highlight.
 class _RoofBlueprintPainter extends CustomPainter {
   final RoofPitch pitch;
   final Length run;
@@ -400,25 +401,30 @@ class _RoofBlueprintPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // 1. Subtle Blueprint Grid
     _paintGrid(canvas, size);
 
+    // 2. Proportional Geometry Calculations
     final runInches = run.toInches().clamp(12.0, 600.0);
     final pitchRise = pitch.riseIn12.clamp(1.0, 24.0);
     final overhangInches = overhang.toInches().clamp(0.0, runInches * 0.5);
 
-    final wallLeftX = size.width * 0.28;
-    final centerRidgeX = size.width * 0.56;
-    final wallRightX = size.width * 0.84;
-    final runVisualW = centerRidgeX - wallLeftX;
+    // Centered symmetrical truss
+    final centerRidgeX = size.width * 0.50;
+    final runVisualW = size.width * 0.30;
+    final wallLeftX = centerRidgeX - runVisualW;
+    final wallRightX = centerRidgeX + runVisualW;
 
+    // Visual rise proportional to pitch
     final slopeRatio = (pitchRise / 12.0);
-    final visualRiseH = (runVisualW * slopeRatio * 0.92).clamp(24.0, size.height * 0.42);
+    final visualRiseH = (runVisualW * slopeRatio * 0.90).clamp(28.0, size.height * 0.44);
 
-    final wallPlateY = size.height * 0.58;
+    final wallPlateY = size.height * 0.60;
     final ridgeY = wallPlateY - visualRiseH;
 
-    final overhangRatio = (overhangInches / runInches).clamp(0.08, 0.35);
-    final overhangVisualW = runVisualW * overhangRatio;
+    // Overhang proportional width with minimum 44px for legible layout
+    final rawOverhangW = runVisualW * (overhangInches / runInches);
+    final overhangVisualW = rawOverhangW.clamp(44.0, 75.0);
     final visualSlope = visualRiseH / runVisualW;
 
     final eavesLeftX = wallLeftX - overhangVisualW;
@@ -437,33 +443,75 @@ class _RoofBlueprintPainter extends CustomPainter {
     final isOverhang = activeMeasurement == RoofMeasurementMode.overhang;
     final isRafter = activeMeasurement == RoofMeasurementMode.rafterLength;
 
-    final refLinePaint = Paint()
+    // 3. Draw Blueprint Reference Planes & Guidelines
+    final bottomRefY = size.height - 18.0;
+
+    // Center Plumb Line
+    _drawDashedVerticalLine(
+      canvas,
+      centerRidgeX,
+      ridgeY,
+      bottomRefY,
+      isRun || isRafter ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF2A374A),
+    );
+    _drawReferenceLabel(
+      canvas,
+      Offset(centerRidgeX, bottomRefY + 4),
+      'RIDGE PLUMB',
+      isRun || isRafter,
+    );
+
+    // Wall Reference Line
+    _drawDashedVerticalLine(
+      canvas,
+      wallLeftX,
+      wallPlateY,
+      bottomRefY,
+      isRun || isOverhang || isRafter ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF2A374A),
+    );
+    _drawReferenceLabel(
+      canvas,
+      Offset(wallLeftX, bottomRefY + 4),
+      'WALL',
+      isRun || isOverhang || isRafter,
+    );
+
+    // Eave Reference Line
+    _drawDashedVerticalLine(
+      canvas,
+      eavesLeftX,
+      eavesLeftY,
+      bottomRefY,
+      isOverhang ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF2A374A),
+    );
+    _drawReferenceLabel(
+      canvas,
+      Offset(eavesLeftX, bottomRefY + 4),
+      'EAVE',
+      isOverhang,
+    );
+
+    // Structural Wall Studs & Tie Beam (Technical Blueprint lines, strictly STROKE)
+    final studPaint = Paint()
       ..color = const Color(0xFF334155)
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(pWallLeft, Offset(pWallLeft.dx, wallPlateY + 24), studPaint);
+    canvas.drawLine(pWallRight, Offset(pWallRight.dx, wallPlateY + 24), studPaint);
 
-    final refDashedPaint = Paint()
-      ..color = const Color(0xFF334155).withValues(alpha: 0.7)
-      ..strokeWidth = 1.0;
+    final tieBeamPaint = Paint()
+      ..color = const Color(0xFF2A374A)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(pWallLeft, pWallRight, tieBeamPaint);
 
-    final bottomRefY = wallPlateY + 34.0;
-
-    _drawDashedVerticalLine(canvas, centerRidgeX, ridgeY, bottomRefY, isRun || isRafter ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF334155));
-    _drawReferenceLabel(canvas, Offset(centerRidgeX, bottomRefY + 6), 'RIDGE PLUMB', isRun || isRafter);
-
-    _drawDashedVerticalLine(canvas, wallLeftX, wallPlateY, bottomRefY, isRun || isOverhang || isRafter ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF334155));
-    _drawReferenceLabel(canvas, Offset(wallLeftX, bottomRefY + 6), 'WALL REF', isRun || isOverhang || isRafter);
-
-    _drawDashedVerticalLine(canvas, eavesLeftX, eavesLeftY, bottomRefY, isOverhang ? AppColors.brandGold.withValues(alpha: 0.7) : const Color(0xFF334155));
-    _drawReferenceLabel(canvas, Offset(eavesLeftX, bottomRefY + 6), 'EAVE END', isOverhang);
-
-    canvas.drawLine(pWallLeft, Offset(pWallLeft.dx, pWallLeft.dy + 24), refLinePaint);
-    canvas.drawLine(pWallRight, Offset(pWallRight.dx, pWallRight.dy + 24), refLinePaint);
-    canvas.drawLine(pWallLeft, pWallRight, refDashedPaint);
-
+    // 4. Draw Inactive Roof Skeleton (STROKE ONLY, NEVER SOLID FILL)
     final skeletonPaint = Paint()
       ..color = const Color(0xFF475569)
       ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     final roofPath = Path()
       ..moveTo(pEavesLeft.dx, pEavesLeft.dy)
@@ -471,8 +519,10 @@ class _RoofBlueprintPainter extends CustomPainter {
       ..lineTo(pEavesRight.dx, pEavesRight.dy);
     canvas.drawPath(roofPath, skeletonPaint);
 
+    // 5. Draw Active Dimension Visualizations ONLY
     final dimY = wallPlateY + 16.0;
 
+    // --- A. PITCH MODE ---
     if (isPitch) {
       _paintPitchIndicator(
         canvas: canvas,
@@ -482,6 +532,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       );
     }
 
+    // --- B. RUN MODE ---
     if (isRun) {
       final runValStr = isMetric ? '${run.toMeters().toStringAsFixed(2)} m' : run.toFeetInchesFraction();
       _paintDimensionLine(
@@ -494,6 +545,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       );
     }
 
+    // --- C. OVERHANG MODE ---
     if (isOverhang) {
       final overValStr = isMetric ? '${(overhang.toMillimeters() / 10).round()} cm' : overhang.toInchesFraction();
       _paintDimensionLine(
@@ -503,22 +555,28 @@ class _RoofBlueprintPainter extends CustomPainter {
         label: 'OVERHANG: $overValStr',
         isActive: true,
         pulseFactor: pulseFactor,
+        labelOffset: const Offset(0, -22),
       );
     }
 
+    // --- D. RAFTER LENGTH MODE ---
     if (isRafter) {
+      // Highlight the sloped rafter line from ridge to wall with gold glow
       final rafterGlowPaint = Paint()
         ..color = AppColors.brandGold.withValues(alpha: 0.25 + 0.15 * pulseFactor)
         ..strokeWidth = 5.0
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
       canvas.drawLine(pWallLeft, pRidge, rafterGlowPaint);
 
       final rafterGoldPaint = Paint()
         ..color = AppColors.brandGold
         ..strokeWidth = 3.0
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
       canvas.drawLine(pWallLeft, pRidge, rafterGoldPaint);
 
+      // Sloped dimension line parallel to rafter
       final rafterValStr = isMetric ? '${rafterLength.toMeters().toStringAsFixed(3)} m' : rafterLength.toFeetInchesFraction();
       _paintSlopedDimension(
         canvas: canvas,
@@ -529,9 +587,17 @@ class _RoofBlueprintPainter extends CustomPainter {
       );
     }
 
-    _drawNode(canvas, pRidge, isRun || isRafter);
-    _drawNode(canvas, pWallLeft, isRun || isOverhang || isRafter);
-    _drawNode(canvas, pEavesLeft, isOverhang);
+    // 6. Draw Reference Nodes for Active Mode
+    if (isRun) {
+      _drawNode(canvas, pRidge, true);
+      _drawNode(canvas, pWallLeft, true);
+    } else if (isOverhang) {
+      _drawNode(canvas, pEavesLeft, true);
+      _drawNode(canvas, pWallLeft, true);
+    } else if (isRafter) {
+      _drawNode(canvas, pRidge, true);
+      _drawNode(canvas, pWallLeft, true);
+    }
   }
 
   void _paintGrid(Canvas canvas, Size size) {
@@ -616,6 +682,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     canvas.drawPath(path, strokePaint);
 
+    // Right-angle symbol at P1
     const sqSize = 5.0;
     final sqPath = Path()
       ..moveTo(p1.dx - sqSize, p1.dy)
@@ -623,6 +690,7 @@ class _RoofBlueprintPainter extends CustomPainter {
       ..lineTo(p1.dx, p1.dy + sqSize);
     canvas.drawPath(sqPath, strokePaint..strokeWidth = 1.0);
 
+    // Horizontal run leg annotation (12")
     final run12Span = const TextSpan(
       text: '12"',
       style: TextStyle(
@@ -634,6 +702,7 @@ class _RoofBlueprintPainter extends CustomPainter {
     final run12Tp = TextPainter(text: run12Span, textDirection: TextDirection.ltr)..layout();
     run12Tp.paint(canvas, Offset(p0.dx + (triW - run12Tp.width) * 0.5, p0.dy - 10));
 
+    // Vertical rise leg annotation (e.g. 4")
     final riseNum = pitch.riseIn12 % 1 == 0
         ? pitch.riseIn12.toInt().toString()
         : pitch.riseIn12.toStringAsFixed(1);
@@ -648,6 +717,7 @@ class _RoofBlueprintPainter extends CustomPainter {
     final riseTp = TextPainter(text: riseSpan, textDirection: TextDirection.ltr)..layout();
     riseTp.paint(canvas, Offset(p1.dx + 4, p0.dy + (triH - riseTp.height) * 0.5));
 
+    // Dimension text badge above triangle
     final pitchText = '${pitch.pitchNotation} (${pitch.pitchDegrees.toStringAsFixed(1)}°)';
     final textSpan = TextSpan(
       text: 'PITCH: $pitchText',
@@ -702,7 +772,8 @@ class _RoofBlueprintPainter extends CustomPainter {
     final linePaint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
 
     canvas.drawLine(start, end, linePaint);
     _drawArrowOrTick(canvas, start, end, linePaint, isActive);
@@ -767,7 +838,8 @@ class _RoofBlueprintPainter extends CustomPainter {
     final linePaint = Paint()
       ..color = AppColors.brandGold
       ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
 
     canvas.drawLine(oStart, oEnd, linePaint);
     _drawArrowOrTick(canvas, oStart, oEnd, linePaint, true);
