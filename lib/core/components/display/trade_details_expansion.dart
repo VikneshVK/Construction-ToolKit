@@ -49,25 +49,32 @@ class _TradeDetailsExpansionState extends State<TradeDetailsExpansion> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        _isExpanded ? Icons.engineering_outlined : Icons.engineering_rounded,
-                        size: 18,
-                        color: AppColors.brandGold,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        widget.title,
-                        style: AppTypography.inputText.copyWith(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          _isExpanded ? Icons.engineering_outlined : Icons.engineering_rounded,
+                          size: 18,
+                          color: AppColors.brandGold,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            widget.title,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.inputText.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: AppSpacing.sm),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         _isExpanded ? 'Hide' : 'Show',

@@ -245,38 +245,23 @@ class _StairsScreenState extends State<StairsScreen> {
                         onChanged: (_) => _recalculate(),
                       ),
                   ] else ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: BuildCalcInput(
-                            label: 'Total Height (Feet)',
-                            unit: 'ft',
-                            controller: _riseFeetCtrl,
-                            infoDescription: 'Vertical height from bottom floor to top landing.',
-                            infoTradeTerm: 'Total Rise',
-                            onChanged: (_) => _recalculate(),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Inches Fraction: ${_riseFraction.toMixedString()}"', style: AppTypography.fieldLabel),
-                              const SizedBox(height: 6),
-                              BuildCalcFractionBar(
-                                selectedFraction: _riseFraction,
-                                onFractionSelected: (frac) {
-                                  setState(() => _riseFraction = frac);
-                                  _recalculate();
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    BuildCalcInput(
+                      label: 'Total Height (Feet)',
+                      unit: 'ft',
+                      controller: _riseFeetCtrl,
+                      infoDescription: 'Vertical height from bottom floor to top landing.',
+                      infoTradeTerm: 'Total Rise',
+                      onChanged: (_) => _recalculate(),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text('Inches Fraction: ${_riseFraction.toMixedString()}"', style: AppTypography.fieldLabel),
+                    const SizedBox(height: 6),
+                    BuildCalcFractionBar(
+                      selectedFraction: _riseFraction,
+                      onFractionSelected: (frac) {
+                        setState(() => _riseFraction = frac);
+                        _recalculate();
+                      },
                     ),
                     const SizedBox(height: AppSpacing.md),
                     if (_solveMode == StairSolveMode.comfortableTread)

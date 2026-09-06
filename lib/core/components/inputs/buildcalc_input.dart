@@ -45,22 +45,31 @@ class BuildCalcInput extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label, style: AppTypography.fieldLabel),
-                if (infoDescription != null) ...[
-                  const SizedBox(width: 4),
-                  BuildCalcInfoButton(
-                    title: label,
-                    description: infoDescription!,
-                    measuringTip: infoTip,
-                    tradeTerm: infoTradeTerm,
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: AppTypography.fieldLabel,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                  if (infoDescription != null) ...[
+                    const SizedBox(width: 4),
+                    BuildCalcInfoButton(
+                      title: label,
+                      description: infoDescription!,
+                      measuringTip: infoTip,
+                      tradeTerm: infoTradeTerm,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-            if (unit != null)
+            if (unit != null) ...[
+              const SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -70,6 +79,7 @@ class BuildCalcInput extends StatelessWidget {
                 ),
                 child: Text(unit!, style: AppTypography.unitBadge),
               ),
+            ],
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
