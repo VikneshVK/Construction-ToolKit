@@ -392,7 +392,10 @@ class _StairsScreenState extends State<StairsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.helperText),
+          Expanded(
+            child: Text(label, style: AppTypography.helperText),
+          ),
+          const SizedBox(width: 8),
           Text(value, style: AppTypography.inputText.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),

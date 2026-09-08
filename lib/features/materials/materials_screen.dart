@@ -173,8 +173,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     final c = double.tryParse(_lumberCostCtrl.text) ?? 1.25;
 
     final res = FramingMath.calculateBoardFeet(
-      nominalThicknessInches: _selectedLumber.actualThicknessInches == 1.5 ? 2.0 : (_selectedLumber.actualThicknessInches == 3.5 ? 4.0 : 1.0),
-      nominalWidthInches: _selectedLumber.actualWidthInches == 3.5 ? 4.0 : (_selectedLumber.actualWidthInches == 5.5 ? 6.0 : 8.0),
+      nominalThicknessInches: _selectedLumber.nominalThicknessInches,
+      nominalWidthInches: _selectedLumber.nominalWidthInches,
       length: (UnitSettings.instance.isMetric ? Length.fromMeters(l) : Length.fromFeet(l)),
       quantity: q,
       costPerBoardFoot: c,
@@ -193,6 +193,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       wallHeight: isMetric ? Length.fromMeters(h) : Length.fromFeet(h),
       unitLengthInches: _selectedMasonry.lengthInches,
       unitHeightInches: _selectedMasonry.heightInches,
+      isDryStacked: _selectedMasonry.isDryStacked,
       wastePercent: _masonryWaste,
     );
 
@@ -369,40 +370,33 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         ],
 
         if (_concreteType == ConcreteStructureType.slab) ...[
-          Row(
-            children: [
-              Expanded(
-                child: BuildCalcInput(
-                  label: 'Length of Area',
-                  unit: lenUnit,
-                  controller: _concDim1Ctrl,
-                  infoDescription: 'Slab length measured end to end.',
-                  infoTip: 'Measure horizontal distance from one end of the slab to the other.',
-                  infoTradeTerm: 'Slab Length (L)',
-                  onTap: () => setState(() => _activeConcreteDim = 'length'),
-                  onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'length');
-                  },
-                  onChanged: (_) => _recalculateConcrete(),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: BuildCalcInput(
-                  label: 'Width of Area',
-                  unit: lenUnit,
-                  controller: _concDim2Ctrl,
-                  infoDescription: 'Slab width measured perpendicular to the length.',
-                  infoTip: 'Measure distance across perpendicular to the length.',
-                  infoTradeTerm: 'Slab Width (W)',
-                  onTap: () => setState(() => _activeConcreteDim = 'width'),
-                  onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'width');
-                  },
-                  onChanged: (_) => _recalculateConcrete(),
-                ),
-              ),
-            ],
+          _buildResponsiveInputPair(
+            BuildCalcInput(
+              label: 'Length of Area',
+              unit: lenUnit,
+              controller: _concDim1Ctrl,
+              infoDescription: 'Slab length measured end to end.',
+              infoTip: 'Measure horizontal distance from one end of the slab to the other.',
+              infoTradeTerm: 'Slab Length (L)',
+              onTap: () => setState(() => _activeConcreteDim = 'length'),
+              onFocusChange: (f) {
+                if (f) setState(() => _activeConcreteDim = 'length');
+              },
+              onChanged: (_) => _recalculateConcrete(),
+            ),
+            BuildCalcInput(
+              label: 'Width of Area',
+              unit: lenUnit,
+              controller: _concDim2Ctrl,
+              infoDescription: 'Slab width measured perpendicular to the length.',
+              infoTip: 'Measure distance across perpendicular to the length.',
+              infoTradeTerm: 'Slab Width (W)',
+              onTap: () => setState(() => _activeConcreteDim = 'width'),
+              onFocusChange: (f) {
+                if (f) setState(() => _activeConcreteDim = 'width');
+              },
+              onChanged: (_) => _recalculateConcrete(),
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           BuildCalcInput(
@@ -433,74 +427,60 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             onChanged: (_) => _recalculateConcrete(),
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: BuildCalcInput(
-                  label: 'Trench Width',
-                  unit: thickUnit,
-                  controller: _concDim2Ctrl,
-                  infoDescription: 'Trench width measured across the excavation.',
-                  infoTradeTerm: 'Trench Width (W)',
-                  onTap: () => setState(() => _activeConcreteDim = 'width'),
-                  onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'width');
-                  },
-                  onChanged: (_) => _recalculateConcrete(),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: BuildCalcInput(
-                  label: 'Footing Depth',
-                  unit: thickUnit,
-                  controller: _concDim3Ctrl,
-                  infoDescription: 'Vertical depth of the concrete footing.',
-                  infoTradeTerm: 'Footing Depth (D)',
-                  onTap: () => setState(() => _activeConcreteDim = 'depth'),
-                  onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'depth');
-                  },
-                  onChanged: (_) => _recalculateConcrete(),
-                ),
-              ),
-            ],
+          _buildResponsiveInputPair(
+            BuildCalcInput(
+              label: 'Trench Width',
+              unit: thickUnit,
+              controller: _concDim2Ctrl,
+              infoDescription: 'Trench width measured across the excavation.',
+              infoTradeTerm: 'Trench Width (W)',
+              onTap: () => setState(() => _activeConcreteDim = 'width'),
+              onFocusChange: (f) {
+                if (f) setState(() => _activeConcreteDim = 'width');
+              },
+              onChanged: (_) => _recalculateConcrete(),
+            ),
+            BuildCalcInput(
+              label: 'Footing Depth',
+              unit: thickUnit,
+              controller: _concDim3Ctrl,
+              infoDescription: 'Vertical depth of the concrete footing.',
+              infoTradeTerm: 'Footing Depth (D)',
+              onTap: () => setState(() => _activeConcreteDim = 'depth'),
+              onFocusChange: (f) {
+                if (f) setState(() => _activeConcreteDim = 'depth');
+              },
+              onChanged: (_) => _recalculateConcrete(),
+            ),
           ),
         ] else if (_concreteType == ConcreteStructureType.column) ...[
-          Row(
-            children: [
-              Expanded(
-                child: BuildCalcInput(
-                  label: 'Column Diameter',
-                  unit: thickUnit,
-                  controller: _concDim1Ctrl,
-                  infoDescription: 'Diameter of the round concrete column.',
-                  infoTip: 'Standard structural round column diameter across the center.',
-                  infoTradeTerm: 'Column Diameter (D)',
-                  onTap: () => setState(() => _activeConcreteDim = 'diameter'),
-                  onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'diameter');
-                  },
-                  onChanged: (_) => _recalculateConcrete(),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: BuildCalcInput(
-                  label: 'Column Height',
-                  unit: lenUnit,
-                  controller: _concDim2Ctrl,
-                  infoDescription: 'Vertical height of the round concrete column.',
-                  infoTip: 'Total vertical height of the column form.',
-                  infoTradeTerm: 'Column Height (H)',
-                  onTap: () => setState(() => _activeConcreteDim = 'height'),
-                  onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'height');
-                  },
-                  onChanged: (_) => _recalculateConcrete(),
-                ),
-              ),
-            ],
+          _buildResponsiveInputPair(
+            BuildCalcInput(
+              label: 'Column Diameter',
+              unit: thickUnit,
+              controller: _concDim1Ctrl,
+              infoDescription: 'Diameter of the round concrete column.',
+              infoTip: 'Standard structural round column diameter across the center.',
+              infoTradeTerm: 'Column Diameter (D)',
+              onTap: () => setState(() => _activeConcreteDim = 'diameter'),
+              onFocusChange: (f) {
+                if (f) setState(() => _activeConcreteDim = 'diameter');
+              },
+              onChanged: (_) => _recalculateConcrete(),
+            ),
+            BuildCalcInput(
+              label: 'Column Height',
+              unit: lenUnit,
+              controller: _concDim2Ctrl,
+              infoDescription: 'Vertical height of the round concrete column.',
+              infoTip: 'Total vertical height of the column form.',
+              infoTradeTerm: 'Column Height (H)',
+              onTap: () => setState(() => _activeConcreteDim = 'height'),
+              onFocusChange: (f) {
+                if (f) setState(() => _activeConcreteDim = 'height');
+              },
+              onChanged: (_) => _recalculateConcrete(),
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           BuildCalcInput(
@@ -511,38 +491,31 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             onChanged: (_) => _recalculateConcrete(),
           ),
         ] else ...[
-          Row(
-            children: [
-              Expanded(
-                child: BuildCalcInput(
-                  label: 'Wall Length',
-                  unit: lenUnit,
-                  controller: _concDim1Ctrl,
-                  infoDescription: 'Horizontal length of the concrete wall.',
-                  infoTradeTerm: 'Wall Length (L)',
-                  onTap: () => setState(() => _activeConcreteDim = 'length'),
-                  onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'length');
-                  },
-                  onChanged: (_) => _recalculateConcrete(),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: BuildCalcInput(
-                  label: 'Wall Height',
-                  unit: lenUnit,
-                  controller: _concDim2Ctrl,
-                  infoDescription: 'Vertical height of the wall.',
-                  infoTradeTerm: 'Wall Height (H)',
-                  onTap: () => setState(() => _activeConcreteDim = 'height'),
-                  onFocusChange: (f) {
-                    if (f) setState(() => _activeConcreteDim = 'height');
-                  },
-                  onChanged: (_) => _recalculateConcrete(),
-                ),
-              ),
-            ],
+          _buildResponsiveInputPair(
+            BuildCalcInput(
+              label: 'Wall Length',
+              unit: lenUnit,
+              controller: _concDim1Ctrl,
+              infoDescription: 'Horizontal length of the concrete wall.',
+              infoTradeTerm: 'Wall Length (L)',
+              onTap: () => setState(() => _activeConcreteDim = 'length'),
+              onFocusChange: (f) {
+                if (f) setState(() => _activeConcreteDim = 'length');
+              },
+              onChanged: (_) => _recalculateConcrete(),
+            ),
+            BuildCalcInput(
+              label: 'Wall Height',
+              unit: lenUnit,
+              controller: _concDim2Ctrl,
+              infoDescription: 'Vertical height of the wall.',
+              infoTradeTerm: 'Wall Height (H)',
+              onTap: () => setState(() => _activeConcreteDim = 'height'),
+              onFocusChange: (f) {
+                if (f) setState(() => _activeConcreteDim = 'height');
+              },
+              onChanged: (_) => _recalculateConcrete(),
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           BuildCalcInput(
@@ -584,8 +557,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 '≈ ${_concreteResult!.grossVolume.toCubicFeet().toStringAsFixed(1)} Cubic Feet',
             ],
             recommendedOrder: isMetric
-                ? 'Ready-Mix Truck Order: ${((_concreteResult!.grossVolume.toCubicMeters() * 10).ceil() / 10.0).toStringAsFixed(1)} m³'
-                : 'Ready-Mix Truck Order: ${_concreteResult!.recommendedOrderYards.toStringAsFixed(1)} yd³',
+                ? 'Ready-Mix Truck Order: ${((_concreteResult!.grossVolume.toCubicMeters() * 4).ceil() / 4.0).toStringAsFixed(2)} m³'
+                : 'Ready-Mix Truck Order: ${_concreteResult!.recommendedOrderYards.toStringAsFixed(2)} yd³',
             accentColor: AppColors.categoryMaterials,
             onSave: () {
               _saveCurrentCalculation(
@@ -634,7 +607,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.helperText),
+          Expanded(
+            child: Text(label, style: AppTypography.helperText),
+          ),
+          const SizedBox(width: 8),
           Text(value, style: AppTypography.inputText.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
@@ -648,10 +624,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: [
-            const Text('Standard Board Size', style: AppTypography.fieldLabel),
-            const SizedBox(width: 4),
-            const BuildCalcInfoButton(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: const [
+            Expanded(
+              child: Text('Standard Board Size', style: AppTypography.fieldLabel),
+            ),
+            SizedBox(width: 4),
+            BuildCalcInfoButton(
               title: 'Standard Board Size',
               description: 'Nominal wood dimensions before mill planing. A "2x4" has actual finished dimensions of 1.5" x 3.5" (38 x 89 mm).',
               measuringTip: 'Pick your framing stud or joist lumber dimension from the menu.',
@@ -689,29 +668,22 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        Row(
-          children: [
-            Expanded(
-              child: BuildCalcInput(
-                label: 'Board Length',
-                unit: isMetric ? 'm' : 'ft',
-                controller: _lumberLengthCtrl,
-                infoDescription: 'The length of each individual board.',
-                infoTip: 'Standard lumber is sold in 8, 10, 12, 14, or 16 ft (2.4m - 4.8m) lengths.',
-                onChanged: (_) => _recalculateLumber(),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: BuildCalcInput(
-                label: 'Board Count',
-                unit: 'pcs',
-                controller: _lumberQtyCtrl,
-                infoDescription: 'How many identical boards you are buying or estimating.',
-                onChanged: (_) => _recalculateLumber(),
-              ),
-            ),
-          ],
+        _buildResponsiveInputPair(
+          BuildCalcInput(
+            label: 'Board Length',
+            unit: isMetric ? 'm' : 'ft',
+            controller: _lumberLengthCtrl,
+            infoDescription: 'The length of each individual board.',
+            infoTip: 'Standard lumber is sold in 8, 10, 12, 14, or 16 ft (2.4m - 4.8m) lengths.',
+            onChanged: (_) => _recalculateLumber(),
+          ),
+          BuildCalcInput(
+            label: 'Board Count',
+            unit: 'pcs',
+            controller: _lumberQtyCtrl,
+            infoDescription: 'How many identical boards you are buying or estimating.',
+            onChanged: (_) => _recalculateLumber(),
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         BuildCalcInput(
@@ -754,9 +726,17 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           TradeDetailsExpansion(
             title: 'Show Lumber Yard & Wood Specs',
             children: [
-              _buildDetailRow('Single Board Volume', '${(_boardFeetResult!.totalBoardFeet / _boardFeetResult!.pieceCount).toStringAsFixed(2)} BF (${(cubicMeters / _boardFeetResult!.pieceCount).toStringAsFixed(4)} m³)'),
+              _buildDetailRow('Single Board — Nominal Volume', '${(_boardFeetResult!.totalBoardFeet / _boardFeetResult!.pieceCount).toStringAsFixed(2)} BF (${(cubicMeters / _boardFeetResult!.pieceCount).toStringAsFixed(4)} m³)'),
               _buildDetailRow('Actual Finished Dimensions', '${_selectedLumber.actualThicknessInches}" × ${_selectedLumber.actualWidthInches}" (${(_selectedLumber.actualThicknessInches * 25.4).round()} × ${(_selectedLumber.actualWidthInches * 25.4).round()} mm)'),
               _buildDetailRow('Total Board Feet (BF)', '${_boardFeetResult!.totalBoardFeet.toStringAsFixed(2)} BF'),
+              const SizedBox(height: AppSpacing.xs),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  'Board-foot calculation uses nominal lumber dimensions.',
+                  style: AppTypography.microMeta,
+                ),
+              ),
             ],
           ),
         ],
@@ -783,10 +763,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         const SizedBox(height: AppSpacing.md),
 
         Row(
-          children: [
-            const Text('Cinder Block / Brick Style', style: AppTypography.fieldLabel),
-            const SizedBox(width: 4),
-            const BuildCalcInfoButton(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: const [
+            Expanded(
+              child: Text('Cinder Block / Brick Style', style: AppTypography.fieldLabel),
+            ),
+            SizedBox(width: 4),
+            BuildCalcInfoButton(
               title: 'Cinder Block & Brick Type',
               description: 'Standard concrete cinder blocks (CMUs) or red bricks including 3/8" (10 mm) mortar joint spacing.',
               tradeTerm: 'Masonry Unit Type (CMU / Brick)',
@@ -823,36 +806,29 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         ),
         const SizedBox(height: AppSpacing.md),
 
-        Row(
-          children: [
-            Expanded(
-              child: BuildCalcInput(
-                label: 'Wall Length',
-                unit: lengthUnit,
-                controller: _wallLengthCtrl,
-                infoDescription: 'Total horizontal length of the block or brick wall.',
-                onTap: () => setState(() => _activeMasonryDim = 'wallLength'),
-                onFocusChange: (f) {
-                  if (f) setState(() => _activeMasonryDim = 'wallLength');
-                },
-                onChanged: (_) => _recalculateMasonry(),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: BuildCalcInput(
-                label: 'Wall Height',
-                unit: lengthUnit,
-                controller: _wallHeightCtrl,
-                infoDescription: 'Vertical height from footing base to top course.',
-                onTap: () => setState(() => _activeMasonryDim = 'wallHeight'),
-                onFocusChange: (f) {
-                  if (f) setState(() => _activeMasonryDim = 'wallHeight');
-                },
-                onChanged: (_) => _recalculateMasonry(),
-              ),
-            ),
-          ],
+        _buildResponsiveInputPair(
+          BuildCalcInput(
+            label: 'Wall Length',
+            unit: lengthUnit,
+            controller: _wallLengthCtrl,
+            infoDescription: 'Total horizontal length of the block or brick wall.',
+            onTap: () => setState(() => _activeMasonryDim = 'wallLength'),
+            onFocusChange: (f) {
+              if (f) setState(() => _activeMasonryDim = 'wallLength');
+            },
+            onChanged: (_) => _recalculateMasonry(),
+          ),
+          BuildCalcInput(
+            label: 'Wall Height',
+            unit: lengthUnit,
+            controller: _wallHeightCtrl,
+            infoDescription: 'Vertical height from footing base to top course.',
+            onTap: () => setState(() => _activeMasonryDim = 'wallHeight'),
+            onFocusChange: (f) {
+              if (f) setState(() => _activeMasonryDim = 'wallHeight');
+            },
+            onChanged: (_) => _recalculateMasonry(),
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
 
@@ -870,7 +846,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             title: 'Total Blocks & Mortar Needed',
             primaryResult: '${_masonryResult!.totalUnitsRequired}',
             primaryUnit: 'Blocks / Bricks',
-            subtitle: '≈ ${_masonryResult!.mortarBagsEstimated.toStringAsFixed(1)} bags of mortar mix (80 lb / 36 kg) included',
+            subtitle: _selectedMasonry.isDryStacked
+                ? 'Dry-stacked system (zero mortar required)'
+                : '≈ ${_masonryResult!.mortarBagsEstimated.toInt()} bags mortar mix (80 lb / 36 kg)',
             secondaryMetrics: [
               'Wall Area: ${isMetric ? "${areaSqMeters.toStringAsFixed(1)} m²" : "${_masonryResult!.wallSquareFeet.toStringAsFixed(1)} sq ft"}',
             ],
@@ -880,12 +858,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               _saveCurrentCalculation(
                 'Masonry: ${_selectedMasonry.label}',
                 '${_masonryResult!.totalUnitsRequired} Units',
-                '${_masonryResult!.coursesHigh} Horizontal Rows | Mortar: ${_masonryResult!.mortarBagsEstimated.toStringAsFixed(1)} bags',
+                '${_masonryResult!.coursesHigh} Horizontal Rows | Mortar: ${_selectedMasonry.isDryStacked ? "0 bags (Dry-stack)" : "${_masonryResult!.mortarBagsEstimated.toInt()} bags"}',
                 {'Type': _selectedMasonry.label, 'Wall': '${_wallLengthCtrl.text}x${_wallHeightCtrl.text} ${isMetric ? 'm' : 'ft'}'},
                 [
                   'Units: ${_masonryResult!.totalUnitsRequired}',
                   'Area: ${isMetric ? areaSqMeters.toStringAsFixed(2) : _masonryResult!.wallSquareFeet.toStringAsFixed(1)} ${isMetric ? 'm²' : 'sq ft'}',
-                  'Mortar: ${_masonryResult!.mortarBagsEstimated.toStringAsFixed(1)} bags',
+                  'Mortar: ${_selectedMasonry.isDryStacked ? "0 bags (Dry-stacked system)" : "${_masonryResult!.mortarBagsEstimated.toInt()} bags"}',
                 ],
               );
             },
@@ -897,11 +875,54 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             children: [
               _buildDetailRow('Horizontal Rows (Courses)', '${_masonryResult!.coursesHigh} rows high (${_masonryResult!.unitsPerCourse} blocks per row)'),
               _buildDetailRow('Net Units (Without Waste)', '${_masonryResult!.netUnitsRequired} units'),
-              _buildDetailRow('Mortar Mix Weight', '≈ ${(_masonryResult!.mortarBagsEstimated * 36.3).toStringAsFixed(0)} kg (~${(_masonryResult!.mortarBagsEstimated * 80).toStringAsFixed(0)} lbs)'),
+              _buildDetailRow(
+                'Mortar Mix Weight',
+                _selectedMasonry.isDryStacked
+                    ? '0 kg / 0 lbs (Dry-stacked system)'
+                    : '≈ ${(_masonryResult!.mortarBagsEstimated * 36.3).toStringAsFixed(0)} kg (~${(_masonryResult!.mortarBagsEstimated * 80).toStringAsFixed(0)} lbs)',
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  'Generic estimate: ~32 standard CMU per 80-lb bag.',
+                  style: AppTypography.microMeta,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  'Actual coverage varies by mortar product, joint thickness, unit configuration, bedding method, and workmanship.',
+                  style: AppTypography.microMeta,
+                ),
+              ),
             ],
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildResponsiveInputPair(Widget input1, Widget input2) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 340) {
+          return Column(
+            children: [
+              input1,
+              const SizedBox(height: AppSpacing.md),
+              input2,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: input1),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: input2),
+          ],
+        );
+      },
     );
   }
 }

@@ -12,6 +12,7 @@ import '../../core/components/controls/buildcalc_unit_selector.dart';
 import '../../core/persistence/local_storage.dart';
 import '../../core/components/dialogs/unit_settings_dialog.dart';
 import '../../core/theme/unit_settings.dart';
+import '../../core/components/display/buildcalc_info_card.dart';
 
 /// Measurements Screen: Dimensional Feet-Inch-Fraction & Metric Converter + Mixed-Unit Site Log.
 class MeasurementsScreen extends StatefulWidget {
@@ -49,7 +50,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
     Length len;
 
     if (_fromUnit == LengthUnit.feet) {
-      len = Length.fromFeetAndInches(val.toInt(), _convFraction);
+      len = Length.fromInches((val * 12.0) + _convFraction.toDouble());
     } else if (_fromUnit == LengthUnit.inches) {
       len = Length.fromInches(val + _convFraction.toDouble());
     } else if (_fromUnit == LengthUnit.yards) {
@@ -151,7 +152,10 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: const [
-            Text('Convert From Unit', style: AppTypography.fieldLabel),
+            Expanded(
+              child: Text('Convert From Unit', style: AppTypography.fieldLabel),
+            ),
+            SizedBox(width: 8),
             BuildCalcInfoButton(
               title: 'Unit Conversion',
               description: 'Select the unit of measurement you currently have (from tape measure, blueprint, or spec sheet). The calculator will convert it into all other standard building units simultaneously with exact fraction accuracy.',
@@ -263,7 +267,10 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: const [
-            Text('Cross-Border Fit Check', style: AppTypography.sectionHeader),
+            Expanded(
+              child: Text('Cross-Border Fit Check', style: AppTypography.sectionHeader),
+            ),
+            SizedBox(width: 8),
             BuildCalcInfoButton(
               title: 'Blueprint vs Material Fit Check',
               description: 'When architectural plans are drafted in metric (e.g. 2400 mm) but store-bought materials are manufactured in imperial dimensions (e.g. 8 ft / 96" = 2438.4 mm), this tool checks the exact discrepancy so you know if trimming or shimming is required.',
@@ -273,7 +280,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
-        const Text('Compare metric-drafted blueprint drawings against off-the-shelf imperial building materials with zero conversion drift.', style: AppTypography.helperText),
+        const Text('Compare metric-drafted blueprint drawings against off-the-shelf imperial building materials to identify conversion variance.', style: AppTypography.helperText),
         const SizedBox(height: AppSpacing.lg),
 
         BuildCalcInput(
@@ -285,7 +292,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text('Equivalent: ${convertedFromMm.toFeetInchesFraction()} (${convertedFromMm.toInchesFraction()})', style: AppTypography.helperText.copyWith(color: AppColors.brandGold)),
+        Text('Equivalent: ${convertedFromMm.toFeetInchesFraction()} (${convertedFromMm.toInchesFraction()})', style: AppTypography.helperText.copyWith(color: AppColors.technicalBlue)),
         const SizedBox(height: AppSpacing.lg),
 
         BuildCalcInput(
@@ -297,7 +304,7 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text('Equivalent: ${convertedFromImp.toFormatted(LengthUnit.millimeters, decimals: 1)} (${convertedFromImp.toFeetInchesFraction()})', style: AppTypography.helperText.copyWith(color: AppColors.brandGold)),
+        Text('Equivalent: ${convertedFromImp.toFormatted(LengthUnit.millimeters, decimals: 1)} (${convertedFromImp.toFeetInchesFraction()})', style: AppTypography.helperText.copyWith(color: AppColors.technicalBlue)),
         const SizedBox(height: AppSpacing.xl),
 
         BuildCalcResultHero(
@@ -318,21 +325,11 @@ class _MeasurementsScreenState extends State<MeasurementsScreen> {
   }
 
   Widget _buildEquivRow(String title, String desc) {
-    return Container(
+    return BuildCalcInfoCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: AppTypography.inputText),
-          Text(desc, style: AppTypography.helperText),
-        ],
-      ),
+      topic: title,
+      description: desc,
+      icon: Icons.straighten,
     );
   }
 }

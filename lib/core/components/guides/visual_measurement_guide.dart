@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_radii.dart';
+import '../display/buildcalc_info_card.dart';
 
 /// Type of measurement guide diagram.
 enum MeasurementGuideType {
@@ -86,37 +87,45 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      _getCategoryIcon(),
-                      size: 16,
-                      color: AppColors.brandGold,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _getTitle(),
-                      style: AppTypography.inputText.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AppColors.textPrimary,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        _getCategoryIcon(),
+                        size: 16,
+                        color: AppColors.technicalBlue,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          _getTitle(),
+                          style: AppTypography.inputText.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.brandGold.withValues(alpha: 0.15),
+                    color: AppColors.technicalBlueBg,
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.brandGold.withValues(alpha: 0.4)),
+                    border: Border.all(color: AppColors.technicalBlue.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     info.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.brandGold,
+                      color: AppColors.technicalBlue,
                     ),
                   ),
                 ),
@@ -152,29 +161,15 @@ class _VisualMeasurementGuideState extends State<VisualMeasurementGuide> with Si
             },
           ),
 
-          // Bottom Instruction Bar: Dynamic Live Tip for the Active Dimension
+          // Bottom Instruction Bar: Standardized BuildCalcInfoCard
           Padding(
-            padding: const EdgeInsets.only(left: 12, right: 12, bottom: 10, top: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.arrow_right_alt_rounded,
-                  color: AppColors.brandGold,
-                  size: 18,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    info.measuringTip,
-                    style: AppTypography.helperText.copyWith(
-                      color: AppColors.textPrimary,
-                      fontSize: 12,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.only(left: 10, right: 10, bottom: 8, top: 4),
+            child: BuildCalcInfoCard(
+              topic: info.title,
+              value: widget.values?[activeDim],
+              description: info.measuringTip,
+              icon: Icons.straighten,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             ),
           ),
 

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.buildcalc" "\0"
-            VALUE "FileDescription", "buildcalc" "\0"
+            VALUE "FileDescription", "BuildCalc — Construction & Jobsite Calculator" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "buildcalc" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.buildcalc. All rights reserved." "\0"
             VALUE "OriginalFilename", "buildcalc.exe" "\0"
-            VALUE "ProductName", "buildcalc" "\0"
+            VALUE "ProductName", "BuildCalc" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -45,9 +45,9 @@ class ConcreteMath {
     final netVol = Volume.fromCubicFeet(cuFt);
     final grossVol = netVol.withWaste(wastePercent);
 
-    // Concrete ready-mix order recommendation: round up to nearest 0.1 or 0.25 yd³
+    // Concrete ready-mix order recommendation: round up to nearest 0.25 yd³ (standard batch-plant dispatch increment)
     final rawGross = grossVol.toCubicYards();
-    final recommended = (rawGross * 10).ceil() / 10.0;
+    final recommended = (rawGross * 4).ceil() / 4.0;
 
     return ConcreteResult(
       netVolume: netVol,
@@ -71,7 +71,7 @@ class ConcreteMath {
     final cuFt = lFeet * wFeet * dFeet;
     final netVol = Volume.fromCubicFeet(cuFt);
     final grossVol = netVol.withWaste(wastePercent);
-    final recommended = (grossVol.toCubicYards() * 10).ceil() / 10.0;
+    final recommended = (grossVol.toCubicYards() * 4).ceil() / 4.0;
 
     return ConcreteResult(
       netVolume: netVol,
@@ -96,7 +96,7 @@ class ConcreteMath {
 
     final netVol = Volume.fromCubicFeet(totalCuFt);
     final grossVol = netVol.withWaste(wastePercent);
-    final recommended = (grossVol.toCubicYards() * 10).ceil() / 10.0;
+    final recommended = (grossVol.toCubicYards() * 4).ceil() / 4.0;
 
     return ConcreteResult(
       netVolume: netVol,
@@ -120,7 +120,7 @@ class ConcreteMath {
     final cuFt = lFeet * hFeet * tFeet;
     final netVol = Volume.fromCubicFeet(cuFt);
     final grossVol = netVol.withWaste(wastePercent);
-    final recommended = (grossVol.toCubicYards() * 10).ceil() / 10.0;
+    final recommended = (grossVol.toCubicYards() * 4).ceil() / 4.0;
 
     return ConcreteResult(
       netVolume: netVol,

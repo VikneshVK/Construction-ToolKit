@@ -61,9 +61,9 @@ class _TradeDetailsExpansionState extends State<TradeDetailsExpansion> {
                         Expanded(
                           child: Text(
                             widget.title,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.inputText.copyWith(
-                              fontSize: 13,
+                            style: const TextStyle(
+                              fontFamily: AppTypography.fontFamily,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),

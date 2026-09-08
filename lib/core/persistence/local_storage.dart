@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Saved calculation entry for the jobsite log.
 class SavedCalculation {
@@ -52,41 +53,42 @@ class SavedCalculation {
 
 /// Offline-first local calculation history storage service.
 class LocalStorageService {
+  static const String _storageKey = 'buildcalc_saved_calculations_v1';
   static final LocalStorageService instance = LocalStorageService._();
   LocalStorageService._();
 
   final List<SavedCalculation> _cachedList = [];
   bool _isInitialized = false;
+  SharedPreferences? _prefs;
 
   Future<void> init() async {
     if (_isInitialized) return;
     _isInitialized = true;
     try {
-      final file = await _getStorageFile();
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        if (content.isNotEmpty) {
-          final List<dynamic> decoded = jsonDecode(content);
-          _cachedList.clear();
-          _cachedList.addAll(decoded.map((e) => SavedCalculation.fromJson(e as Map<String, dynamic>)));
-        }
+      _prefs = await SharedPreferences.getInstance();
+      final content = _prefs?.getString(_storageKey);
+      if (content != null && content.isNotEmpty) {
+        final List<dynamic> decoded = jsonDecode(content);
+        _cachedList.clear();
+        _cachedList.addAll(decoded.map((e) => SavedCalculation.fromJson(e as Map<String, dynamic>)));
       }
     } catch (_) {
       // Fallback to in-memory store
     }
   }
 
-  Future<File> _getStorageFile() async {
-    final tempDir = Directory.systemTemp;
-    return File('${tempDir.path}/buildcalc_history.json');
-  }
-
   Future<void> _persist() async {
     try {
-      final file = await _getStorageFile();
       final data = jsonEncode(_cachedList.map((e) => e.toJson()).toList());
-      await file.writeAsString(data);
+      await _prefs?.setString(_storageKey, data);
     } catch (_) {}
+  }
+
+  @visibleForTesting
+  void resetForTesting() {
+    _cachedList.clear();
+    _isInitialized = false;
+    _prefs = null;
   }
 
   List<SavedCalculation> getHistory() {

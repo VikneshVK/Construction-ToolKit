@@ -29,21 +29,21 @@ class BuildCalcCodeCheck extends StatelessWidget {
         border = AppColors.statusSuccess.withValues(alpha: 0.4);
         fg = AppColors.statusSuccess;
         icon = Icons.verified_outlined;
-        statusTitle = 'CODE: PASS — Within IRC Limits';
+        statusTitle = 'DIMENSION CHECK: PASS — Within IRC Limits';
         break;
       case StairCodeStatus.warning:
         bg = AppColors.statusWarningBg;
         border = AppColors.statusWarning.withValues(alpha: 0.4);
         fg = AppColors.statusWarning;
         icon = Icons.warning_amber_rounded;
-        statusTitle = 'CODE: WARNING — Exceeds IRC Limit';
+        statusTitle = 'DIMENSION CHECK: WARNING — Exceeds IRC Limit';
         break;
       case StairCodeStatus.error:
         bg = AppColors.statusErrorBg;
         border = AppColors.statusError.withValues(alpha: 0.4);
         fg = AppColors.statusError;
         icon = Icons.error_outline_rounded;
-        statusTitle = 'CODE: ERROR — Invalid Dimensions';
+        statusTitle = 'DIMENSION CHECK: ERROR — Invalid Dimensions';
         break;
     }
 
@@ -113,7 +113,7 @@ class BuildCalcCodeCheck extends StatelessWidget {
                 border: Border.all(
                   color: isComfortOk
                       ? AppColors.statusSuccess.withValues(alpha: 0.25)
-                      : AppColors.brandGold.withValues(alpha: 0.35),
+                      : AppColors.technicalBlue.withValues(alpha: 0.35),
                 ),
               ),
               child: Column(
@@ -124,15 +124,17 @@ class BuildCalcCodeCheck extends StatelessWidget {
                       Icon(
                         isComfortOk ? Icons.thumb_up_alt_outlined : Icons.info_outline_rounded,
                         size: 14,
-                        color: isComfortOk ? AppColors.statusSuccess : AppColors.brandGold,
+                        color: isComfortOk ? AppColors.statusSuccess : AppColors.technicalBlue,
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        report.comfortLabel,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isComfortOk ? AppColors.statusSuccess : AppColors.brandGold,
+                      Expanded(
+                        child: Text(
+                          report.comfortLabel,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: isComfortOk ? AppColors.statusSuccess : AppColors.technicalBlue,
+                          ),
                         ),
                       ),
                     ],

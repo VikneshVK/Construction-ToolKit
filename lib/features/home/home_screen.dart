@@ -92,14 +92,17 @@ class HomeScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_getGreeting(), style: AppTypography.helperText.copyWith(fontSize: 14)),
-                          const SizedBox(height: 2),
-                          const Text("Let's build.", style: AppTypography.heroResult),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_getGreeting(), style: AppTypography.helperText.copyWith(fontSize: 14)),
+                            const SizedBox(height: 2),
+                            const Text("Let's build.", style: AppTypography.heroResult),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: AppSpacing.sm),
                       // Quick Unit Switch Badge
                       InkWell(
                         onTap: () => UnitSettingsDialog.show(context),
@@ -146,7 +149,7 @@ class HomeScreen extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     mainAxisSpacing: AppSpacing.md,
                     crossAxisSpacing: AppSpacing.md,
-                    childAspectRatio: 1.05,
+                    childAspectRatio: 0.76,
                     children: [
                       _buildCategoryCard(
                         title: 'Materials',
@@ -184,7 +187,9 @@ class HomeScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Recent Calculations', style: AppTypography.sectionHeader),
+                      const Expanded(
+                        child: Text('Recent Calculations', style: AppTypography.sectionHeader),
+                      ),
                       TextButton(
                         onPressed: () => onSelectCategory(5), // History
                         child: const Text('See All', style: TextStyle(color: AppColors.brandGold, fontWeight: FontWeight.w700)),
@@ -266,21 +271,19 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CustomCategoryIcon(type: iconType, size: 48),
-              const SizedBox(height: AppSpacing.sm),
-              Text(title, style: AppTypography.sectionHeader.copyWith(fontSize: 16), textAlign: TextAlign.center),
+              CustomCategoryIcon(type: iconType, size: 44),
+              const SizedBox(height: AppSpacing.xs),
+              Text(title, style: AppTypography.sectionHeader.copyWith(fontSize: 15), textAlign: TextAlign.center),
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: AppTypography.helperText.copyWith(fontSize: 11, height: 1.2),
                 textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

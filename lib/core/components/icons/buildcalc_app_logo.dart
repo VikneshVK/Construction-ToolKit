@@ -17,7 +17,7 @@ class BuildCalcAppLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget icon = CustomPaint(
       size: Size(size, size),
-      painter: _BuildCalcLogoPainter(),
+      painter: BuildCalcLogoPainter(),
     );
 
     if (withBackground) {
@@ -52,7 +52,7 @@ class BuildCalcAppLogo extends StatelessWidget {
   }
 }
 
-class _BuildCalcLogoPainter extends CustomPainter {
+class BuildCalcLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;

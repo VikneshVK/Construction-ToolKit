@@ -200,9 +200,7 @@ class Fraction implements Comparable<Fraction> {
 
   /// Snaps this fraction to the nearest standard construction resolution (e.g. 16 for nearest 1/16").
   Fraction roundToNearest(int resolution) {
-    if (denominator <= resolution && resolution % denominator == 0) {
-      return this;
-    }
+    if (resolution <= 0) return this;
     return Fraction.fromDouble(toDouble(), maxDenominator: resolution);
   }
 

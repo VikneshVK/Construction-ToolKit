@@ -295,8 +295,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               height: 1.1,
             ),
             textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

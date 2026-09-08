@@ -34,7 +34,8 @@ class JackRafterResult {
   final Length onCenterSpacing;    // e.g. 16" or 24"
   final Length theoreticalLength;  // Centerline math length
   final Length trueCutLongPoint;   // Physical cut mark on the long-point edge of the bevel
-  final Length bevelDeduction;     // Shift due to hip/valley lumber thickness
+  final Length bevelDeduction;     // Hip shortening deduction
+  final Length hipShortening;      // Sloped hip shortening
   final double sideCutBevelAngle;  // Compound saw blade bevel tilt (e.g. 45° plan pitch tilt)
 
   const JackRafterResult({
@@ -43,6 +44,7 @@ class JackRafterResult {
     required this.theoreticalLength,
     required this.trueCutLongPoint,
     required this.bevelDeduction,
+    required this.hipShortening,
     required this.sideCutBevelAngle,
   });
 }
@@ -97,8 +99,12 @@ class RoofingMath {
     );
   }
 
-  /// Calculates a series of "True-Cut" Jack Rafters along a hip/valley rafter.
-  /// Corrects the common centerline error by deducting half the 45° bevel thickness of the hip lumber.
+  /// Calculates a series of "True-Cut" Jack Rafters along a regular 45° hip/valley rafter.
+  /// 
+  /// Shortening formula (half 45° hip thickness along roof slope):
+  ///   hipShorteningInches = (hipThickness / 2) / sin(45°)
+  ///   trueCutDeductionInches = hipShorteningInches * slopeMultiplier
+  ///   physicalCutInches = max(0, theoreticalInches - trueCutDeductionInches)
   static List<JackRafterResult> calculateJackRafters({
     required RoofPitch pitch,
     required Length spacingOnCenter, // e.g. 16" or 24"
@@ -110,13 +116,12 @@ class RoofingMath {
     final spacingInches = spacingOnCenter.toInches();
     final hipThickInches = hipLumberThickness.toInches();
 
-    // The deduction on the long point for a 45-degree hip angle plan:
-    // delta = (hipThickness / 2) / sin(45 deg) * slopeMultiplier
+    // 1. Sloped hip shortening deduction:
     final planAngleRad = 45.0 * (math.pi / 180.0);
-    final bevelOffsetInches = (hipThickInches / 2.0) / math.sin(planAngleRad);
-    final trueCutDeductionInches = bevelOffsetInches * (1.0 / slopeMultiplier);
+    final hipShorteningInches = (hipThickInches / 2.0) / math.sin(planAngleRad);
+    final trueCutDeductionInches = hipShorteningInches * slopeMultiplier;
 
-    // Compound side-cut saw bevel angle for jack rafter face cut:
+    // Compound side-cut saw bevel angle for jack rafter cheek cut:
     // tan(side cut) = cos(pitch angle)
     final pitchRad = pitch.pitchDegrees * (math.pi / 180.0);
     final sideCutRad = math.atan(math.cos(pitchRad));
@@ -132,6 +137,7 @@ class RoofingMath {
         theoreticalLength: Length.fromInches(theoreticalInches),
         trueCutLongPoint: Length.fromInches(physicalCutInches),
         bevelDeduction: Length.fromInches(trueCutDeductionInches),
+        hipShortening: Length.fromInches(trueCutDeductionInches),
         sideCutBevelAngle: sideCutDeg,
       ));
     }

@@ -53,8 +53,7 @@ class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
                         Expanded(
                           child: Text(
                             'Unit System Settings',
-                            style: AppTypography.screenTitle,
-                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.cardTitle,
                           ),
                         ),
                       ],
@@ -146,7 +145,7 @@ class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
             Flexible(
               child: Text(
                 label,
-                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,

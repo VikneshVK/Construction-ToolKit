@@ -36,7 +36,8 @@ class BuildCalcWasteSlider extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: AppTypography.fieldLabel),
+              Expanded(child: Text(label, style: AppTypography.fieldLabel)),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -77,9 +78,15 @@ class BuildCalcWasteSlider extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
-              Text('0% (Exact)', style: AppTypography.helperText),
-              Text('10% (Standard)', style: AppTypography.helperText),
-              Text('20% (High)', style: AppTypography.helperText),
+              Expanded(
+                child: Text('0% (Exact)', style: AppTypography.microMeta, textAlign: TextAlign.start),
+              ),
+              Expanded(
+                child: Text('10% (Standard)', style: AppTypography.microMeta, textAlign: TextAlign.center),
+              ),
+              Expanded(
+                child: Text('20% (High)', style: AppTypography.microMeta, textAlign: TextAlign.end),
+              ),
             ],
           ),
         ],

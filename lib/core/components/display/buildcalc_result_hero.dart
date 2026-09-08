@@ -64,19 +64,21 @@ class BuildCalcResultHero extends StatelessWidget {
 
           // Primary Readout
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpacing.xs,
+              runSpacing: 2,
               children: [
-                Text(primaryResult, style: AppTypography.heroResult),
-                if (primaryUnit != null) ...[
-                  const SizedBox(width: AppSpacing.xs),
+                Text(
+                  primaryResult,
+                  style: AppTypography.primaryResult,
+                ),
+                if (primaryUnit != null)
                   Text(
                     primaryUnit!,
-                    style: AppTypography.screenTitle.copyWith(color: accentColor),
+                    style: AppTypography.resultUnit.copyWith(color: AppColors.textSecondary),
                   ),
-                ],
               ],
             ),
           ),
@@ -85,7 +87,13 @@ class BuildCalcResultHero extends StatelessWidget {
           if (subtitle != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Text(subtitle!, style: AppTypography.secondaryMetric),
+              child: Text(
+                subtitle!,
+                style: AppTypography.supportingText.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
             ),
 
           // Secondary metrics (e.g. alternate units)
@@ -143,8 +151,9 @@ class BuildCalcResultHero extends StatelessWidget {
           // Action Toolbar (Save, Copy, Share)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Wrap(
+              alignment: WrapAlignment.spaceEvenly,
+              spacing: 4,
               children: [
                 if (onSave != null)
                   TextButton.icon(

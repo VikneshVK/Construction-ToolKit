@@ -52,8 +52,10 @@ class Length {
     final totalFeet = absInches ~/ 12;
     final remInchesDouble = absInches - (totalFeet * 12);
 
-    final rawFraction = Fraction.fromDouble(remInchesDouble, maxDenominator: 64);
-    final roundedFraction = resolution.apply(rawFraction);
+    final maxDenom = resolution == RoundingResolution.exact || resolution.denominator == 0
+        ? 64
+        : resolution.denominator;
+    final roundedFraction = Fraction.fromDouble(remInchesDouble, maxDenominator: maxDenom);
 
     // If rounding pushed inches to 12", adjust feet
     var feet = totalFeet;
@@ -75,8 +77,11 @@ class Length {
 
   /// Formats in plain inches with fraction (e.g. `98 1/2"`).
   String toInchesFraction({RoundingResolution resolution = RoundingResolution.sixteenth}) {
-    final frac = Fraction.fromDouble(totalInches, maxDenominator: 64);
-    return resolution.apply(frac).toMixedString(unitSymbol: '"');
+    final maxDenom = resolution == RoundingResolution.exact || resolution.denominator == 0
+        ? 64
+        : resolution.denominator;
+    final frac = Fraction.fromDouble(totalInches, maxDenominator: maxDenom);
+    return frac.toMixedString(unitSymbol: '"');
   }
 
   /// Formats in decimal with specified units (e.g. `2.45 m` or `24.00 ft`).

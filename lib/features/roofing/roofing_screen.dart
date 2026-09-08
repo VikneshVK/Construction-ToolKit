@@ -12,6 +12,7 @@ import '../../core/components/dialogs/unit_settings_dialog.dart';
 import '../../core/theme/unit_settings.dart';
 import '../../core/components/guides/build_calc_roof_diagram.dart';
 import '../../core/components/display/trade_details_expansion.dart';
+import '../../core/components/display/buildcalc_info_card.dart';
 
 /// Roofing Workflow Screen: Common Rafters, Pitch Slope Trigonometry, True-Cut Jack Rafters.
 class RoofingScreen extends StatefulWidget {
@@ -202,39 +203,75 @@ class _RoofingScreenState extends State<RoofingScreen> {
                   const SizedBox(height: AppSpacing.lg),
 
                   if (_subTabIndex == 0) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: BuildCalcInput(
-                            label: 'Common Rafter Run',
-                            unit: isMetric ? 'm' : 'ft',
-                            controller: _runFeetCtrl,
-                            infoDescription: 'Horizontal distance from the ridge plumb reference to the wall reference.',
-                            infoTip: 'This is half the total building width if you have a centered gable roof.',
-                            infoTradeTerm: 'Common Rafter Run (Run)',
-                            onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.run),
-                            onFocusChange: (f) {
-                              if (f) setState(() => _activeRoofMode = RoofMeasurementMode.run);
-                            },
-                            onChanged: (_) => _recalculate(),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: BuildCalcInput(
-                            label: 'Roof Slope (Rise / 12)',
-                            unit: 'in/12',
-                            controller: _pitchCtrl,
-                            infoDescription: 'How steep the roof is. A 4/12 pitch rises 4 inches vertically for every 12 inches of horizontal run.',
-                            infoTradeTerm: 'Roof Pitch (Slope)',
-                            onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.pitch),
-                            onFocusChange: (f) {
-                              if (f) setState(() => _activeRoofMode = RoofMeasurementMode.pitch);
-                            },
-                            onChanged: (_) => _recalculate(),
-                          ),
-                        ),
-                      ],
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth < 340) {
+                          return Column(
+                            children: [
+                              BuildCalcInput(
+                                label: 'Common Rafter Run',
+                                unit: isMetric ? 'm' : 'ft',
+                                controller: _runFeetCtrl,
+                                infoDescription: 'Horizontal distance from the ridge plumb reference to the wall reference.',
+                                infoTip: 'This is half the total building width if you have a centered gable roof.',
+                                infoTradeTerm: 'Common Rafter Run (Run)',
+                                onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.run),
+                                onFocusChange: (f) {
+                                  if (f) setState(() => _activeRoofMode = RoofMeasurementMode.run);
+                                },
+                                onChanged: (_) => _recalculate(),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              BuildCalcInput(
+                                label: 'Roof Slope (Rise / 12)',
+                                unit: 'in/12',
+                                controller: _pitchCtrl,
+                                infoDescription: 'How steep the roof is. A 4/12 pitch rises 4 inches vertically for every 12 inches of horizontal run.',
+                                infoTradeTerm: 'Roof Pitch (Slope)',
+                                onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.pitch),
+                                onFocusChange: (f) {
+                                  if (f) setState(() => _activeRoofMode = RoofMeasurementMode.pitch);
+                                },
+                                onChanged: (_) => _recalculate(),
+                              ),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: BuildCalcInput(
+                                label: 'Common Rafter Run',
+                                unit: isMetric ? 'm' : 'ft',
+                                controller: _runFeetCtrl,
+                                infoDescription: 'Horizontal distance from the ridge plumb reference to the wall reference.',
+                                infoTip: 'This is half the total building width if you have a centered gable roof.',
+                                infoTradeTerm: 'Common Rafter Run (Run)',
+                                onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.run),
+                                onFocusChange: (f) {
+                                  if (f) setState(() => _activeRoofMode = RoofMeasurementMode.run);
+                                },
+                                onChanged: (_) => _recalculate(),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: BuildCalcInput(
+                                label: 'Roof Slope (Rise / 12)',
+                                unit: 'in/12',
+                                controller: _pitchCtrl,
+                                infoDescription: 'How steep the roof is. A 4/12 pitch rises 4 inches vertically for every 12 inches of horizontal run.',
+                                infoTradeTerm: 'Roof Pitch (Slope)',
+                                onTap: () => setState(() => _activeRoofMode = RoofMeasurementMode.pitch),
+                                onFocusChange: (f) {
+                                  if (f) setState(() => _activeRoofMode = RoofMeasurementMode.pitch);
+                                },
+                                onChanged: (_) => _recalculate(),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: AppSpacing.md),
                     BuildCalcInput(
@@ -281,17 +318,21 @@ class _RoofingScreenState extends State<RoofingScreen> {
                   ],
 
                   if (_subTabIndex == 1) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
                         const Text('True-Cut Jack Schedule', style: AppTypography.sectionHeader),
-                        Row(
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
                           children: [
                             _buildOptionChip(isMetric ? '400mm (16")' : '16" O.C.', _spacingOnCenter == 16.0, () {
                               setState(() => _spacingOnCenter = 16.0);
                               _recalculate();
                             }),
-                            const SizedBox(width: 6),
                             _buildOptionChip(isMetric ? '600mm (24")' : '24" O.C.', _spacingOnCenter == 24.0, () {
                               setState(() => _spacingOnCenter = 24.0);
                               _recalculate();
@@ -301,17 +342,21 @@ class _RoofingScreenState extends State<RoofingScreen> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
                         const Text('Hip Lumber Thickness:', style: AppTypography.helperText),
-                        Row(
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
                           children: [
                             _buildOptionChip(isMetric ? '38mm (2x)' : '1.5" (2x)', _hipLumberThickness == 1.5, () {
                               setState(() => _hipLumberThickness = 1.5);
                               _recalculate();
                             }),
-                            const SizedBox(width: 6),
                             _buildOptionChip(isMetric ? '76mm (4x)' : '3.0" (4x/Dbl)', _hipLumberThickness == 3.0, () {
                               setState(() => _hipLumberThickness = 3.0);
                               _recalculate();
@@ -326,41 +371,19 @@ class _RoofingScreenState extends State<RoofingScreen> {
                       final titleStr = isMetric
                           ? 'Jack #${jack.jackIndex} (${(jack.onCenterSpacing.toMillimeters()).round()} mm O.C.)'
                           : 'Jack #${jack.jackIndex} (${jack.onCenterSpacing.toInchesFraction()} O.C.)';
-                      final subStr = isMetric
-                          ? 'Theoretical: ${(jack.theoreticalLength.toMillimeters()).round()} mm (Deduct: -${(jack.bevelDeduction.toMillimeters()).round()} mm)'
-                          : 'Centerline: ${jack.theoreticalLength.toFeetInchesFraction()} (Deduct: -${jack.bevelDeduction.toInchesFraction()})';
                       final cutStr = isMetric
                           ? '${(jack.trueCutLongPoint.toMillimeters()).round()} mm'
                           : jack.trueCutLongPoint.toFeetInchesFraction();
+                      final descStr = isMetric
+                          ? 'Centerline: ${(jack.theoreticalLength.toMillimeters()).round()} mm\nHip shortening: ${(jack.hipShortening.toMillimeters()).round()} mm\nCut length to long point: $cutStr\nSaw bevel: ${jack.sideCutBevelAngle.toStringAsFixed(1)}°'
+                          : 'Centerline: ${jack.theoreticalLength.toFeetInchesFraction()}\nHip shortening: ${jack.hipShortening.toInchesFraction()}\nCut length to long point: $cutStr\nSaw bevel: ${jack.sideCutBevelAngle.toStringAsFixed(1)}°';
 
-                      return Container(
+                      return BuildCalcInfoCard(
                         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        decoration: BoxDecoration(
-                          color: AppColors.bgSurface,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.borderSubtle),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(titleStr, style: AppTypography.inputText),
-                                const SizedBox(height: 2),
-                                Text(subStr, style: AppTypography.helperText),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(cutStr, style: AppTypography.unitBadge.copyWith(fontSize: 16)),
-                                Text('Saw Bevel: ${jack.sideCutBevelAngle.toStringAsFixed(1)}°', style: AppTypography.helperText.copyWith(color: AppColors.categoryRoofing)),
-                              ],
-                            ),
-                          ],
-                        ),
+                        topic: titleStr,
+                        value: cutStr,
+                        description: descStr,
+                        icon: Icons.carpenter_outlined,
                       );
                     }),
                   ],
@@ -388,7 +411,10 @@ class _RoofingScreenState extends State<RoofingScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.helperText),
+          Expanded(
+            child: Text(label, style: AppTypography.helperText),
+          ),
+          const SizedBox(width: 8),
           Text(value, style: AppTypography.inputText.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
@@ -400,7 +426,7 @@ class _RoofingScreenState extends State<RoofingScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(4),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.brandGold : AppColors.bgElevated,
           borderRadius: BorderRadius.circular(4),

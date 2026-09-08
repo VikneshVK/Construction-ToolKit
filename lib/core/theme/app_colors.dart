@@ -14,14 +14,26 @@ class AppColors {
   static const Color borderFocused = Color(0xFFD4AF37); // Gold focus ring
   static const Color borderLight = Color(0xFF3F4B5A);
 
-  // Brand / Hardhat Safety Primary
-  static const Color brandGold = Color(0xFFD4AF37);       // Safety Gold / Primary CTA
+  // Semantic Color Role System:
+  // - Gold: Active / selected / interactive only (Selected tabs, active presets, sliders, interactive controls)
+  // - Green: Pass / success / recommended (Code PASS, successful checks, positive recommendations)
+  // - Blue: Technical information (Technical/calculated reference information and diagram guidance)
+  // - White: Primary result (Main calculated number and highest-priority output)
+  // - Gray: Secondary information (Labels, descriptions, supporting values)
+
+  // Interactive / Active (Gold only)
+  static const Color brandGold = Color(0xFFD4AF37);       // Safety Gold / Active State
   static const Color brandGoldHover = Color(0xFFE5B824);  // Pressed / Active
   static const Color brandGoldMuted = Color(0x33D4AF37);  // 20% tint for active chips
 
-  // Typography Colors (WCAG AAA compliant on dark canvas)
-  static const Color textPrimary = Color(0xFFF5F7FA);   // Crisp Chalk White
-  static const Color textSecondary = Color(0xFF9CA3AF); // High-legibility neutral (units, helpers)
+  // Technical Information & Blueprint Reference (Blue)
+  static const Color technicalBlue = Color(0xFF38BDF8);   // Technical/calculated reference & diagrams
+  static const Color technicalBlueBg = Color(0x2638BDF8); // 15% tint for technical info badges
+  static const Color technicalBlueDark = Color(0xFF0284C7);
+
+  // Typography & Readout Colors
+  static const Color textPrimary = Color(0xFFF5F7FA);   // Crisp Chalk White (Primary results & high-priority text)
+  static const Color textSecondary = Color(0xFF9CA3AF); // High-legibility neutral gray (Labels, descriptions, supporting values)
   static const Color textMuted = Color(0xFF6B7280);     // Timestamps, subtle subtext
   static const Color textInverse = Color(0xFF0F1115);   // On gold background
 
@@ -32,7 +44,7 @@ class AppColors {
   static const Color categoryMeasurements = Color(0xFF10B981); // Machinist Emerald
 
   // Semantic Status Tints
-  static const Color statusSuccess = Color(0xFF22C55E);  // Compliance Pass (Emerald)
+  static const Color statusSuccess = Color(0xFF22C55E);  // Compliance Pass / Recommended (Green)
   static const Color statusSuccessBg = Color(0x2622C55E);
   
   static const Color statusWarning = Color(0xFFF59E0B);  // Code Limit / Advisory (Amber)

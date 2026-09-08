@@ -40,7 +40,7 @@ class StairCodeReport {
     required this.isRiserCompliant,
     required this.isTreadCompliant,
     required this.isComfortCompliant,
-    this.codeLabel = 'CODE: PASS',
+    this.codeLabel = 'DIMENSION CHECK: PASS',
     this.comfortLabel = 'COMFORT: Optimal',
     this.comfortDetails = const [],
   });
@@ -184,16 +184,23 @@ class StairMath {
     }
 
     final isCodePass = isRiserOk && isTreadOk;
+    final List<String> details = [];
+    if (isCodePass) {
+      details.add('Riser and tread dimensions satisfy the selected IRC limits.');
+      details.add('Calculated stair uses uniform risers and treads.');
+    } else {
+      details.addAll(codeViolations);
+      details.add('Calculated stair uses uniform risers and treads.');
+    }
+
     return StairCodeReport(
       status: isCodePass ? StairCodeStatus.pass : StairCodeStatus.warning,
-      ruleReference: 'IRC 2024 §R311.7 (Stairways)',
-      details: isCodePass
-          ? ['Riser & tread dimensions satisfy standard residential IRC code limits.']
-          : codeViolations,
+      ruleReference: 'Residential Stair Dimension Check — IRC',
+      details: details,
       isRiserCompliant: isRiserOk,
       isTreadCompliant: isTreadOk,
       isComfortCompliant: isComfortOk,
-      codeLabel: isCodePass ? 'CODE: PASS' : 'CODE: WARNING',
+      codeLabel: isCodePass ? 'DIMENSION CHECK: PASS' : 'DIMENSION CHECK: WARNING',
       comfortLabel: isComfortOk ? 'COMFORT: Optimal' : 'COMFORT: Slightly outside preferred range',
       comfortDetails: comfortNotes,
     );
@@ -211,12 +218,12 @@ class StairMath {
       inclineAngleDegrees: 0,
       codeReport: StairCodeReport(
         status: StairCodeStatus.error,
-        ruleReference: 'IRC 2024 §R311.7',
+        ruleReference: 'Residential Stair Dimension Check — IRC',
         details: [reason],
         isRiserCompliant: false,
         isTreadCompliant: false,
         isComfortCompliant: false,
-        codeLabel: 'CODE: ERROR',
+        codeLabel: 'DIMENSION CHECK: ERROR',
         comfortLabel: 'COMFORT: Invalid',
       ),
     );

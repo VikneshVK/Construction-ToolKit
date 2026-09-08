@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_radii.dart';
 import '../../math/measurement.dart';
+import '../display/buildcalc_info_card.dart';
 
 /// Selectable measurement modes for the interactive roof diagram.
 enum RoofMeasurementMode {
@@ -143,39 +144,49 @@ class _BuildCalcRoofDiagramState extends State<BuildCalcRoofDiagram> with Single
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.roofing_outlined,
-                      size: 18,
-                      color: AppColors.brandGold,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'COMMON RAFTER',
-                      style: AppTypography.inputText.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: AppColors.textPrimary,
-                        letterSpacing: 0.5,
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.roofing_outlined,
+                        size: 18,
+                        color: AppColors.brandGold,
                       ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.brandGold.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.brandGold.withValues(alpha: 0.4)),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'COMMON RAFTER',
+                          style: AppTypography.inputText.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                            letterSpacing: 0.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    explanation.title,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.brandGold,
-                      letterSpacing: 0.3,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.brandGold.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.brandGold.withValues(alpha: 0.4)),
+                    ),
+                    child: Text(
+                      explanation.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.brandGold,
+                        letterSpacing: 0.3,
+                      ),
                     ),
                   ),
                 ),
@@ -228,62 +239,13 @@ class _BuildCalcRoofDiagramState extends State<BuildCalcRoofDiagram> with Single
               ],
             ),
           ),
-          Container(
-            margin: const EdgeInsets.only(left: 10, right: 10, bottom: 12, top: 2),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.bgElevated,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.borderSubtle),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  size: 16,
-                  color: AppColors.brandGold,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            explanation.title,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.brandGold,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            explanation.valueText,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        explanation.description,
-                        style: AppTypography.helperText.copyWith(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          Padding(
+            padding: const EdgeInsets.only(left: 10, right: 10, bottom: 12, top: 2),
+            child: BuildCalcInfoCard(
+              topic: explanation.title,
+              value: explanation.valueText,
+              description: explanation.description,
+              icon: Icons.info_outline_rounded,
             ),
           ),
         ],
@@ -334,8 +296,7 @@ class _BuildCalcRoofDiagramState extends State<BuildCalcRoofDiagram> with Single
                     Flexible(
                       child: Text(
                         label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
@@ -348,8 +309,7 @@ class _BuildCalcRoofDiagramState extends State<BuildCalcRoofDiagram> with Single
                 const SizedBox(height: 2),
                 Text(
                   valStr,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -807,7 +767,9 @@ class _RoofBlueprintPainter extends CustomPainter {
 
     final rawMidX = (start.dx + end.dx) * 0.5 + labelOffset.dx;
     // Strictly clamp the badge within canvas to guarantee NO clipping
-    final clampedMidX = rawMidX.clamp(badgeWidth * 0.5 + 8, size.width - badgeWidth * 0.5 - 8);
+    final minX = badgeWidth * 0.5 + 8;
+    final maxX = math.max(minX, size.width - badgeWidth * 0.5 - 8);
+    final clampedMidX = rawMidX.clamp(minX, maxX);
     final mid = Offset(clampedMidX, (start.dy + end.dy) * 0.5 + labelOffset.dy);
 
     final badgeRect = Rect.fromCenter(
