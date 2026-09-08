@@ -41,4 +41,4 @@ If we make any updates to this policy in future versions of the application, cha
 
 ### 6. Contact Us
 If you have any questions or feedback regarding this Privacy Policy, please contact us at:
-* **Support Email:** support@buildcalc.app (or your developer contact email)
+* **Support Email:** [vksolution.tech@gmail.com](mailto:vksolution.tech@gmail.com)
