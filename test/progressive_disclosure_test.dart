@@ -11,7 +11,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
-    await tester.pumpWidget(const BuildCalcApp());
+    await tester.pumpWidget(const BuildCalcApp(overrideDisclaimerAccepted: true));
     await tester.pumpAndSettle();
 
     // 1. Navigate to Stairs

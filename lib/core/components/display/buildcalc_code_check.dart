@@ -151,6 +151,18 @@ class BuildCalcCodeCheck extends StatelessWidget {
               ),
             ),
           ],
+
+          // 3. Model Code Reference Footnote
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            '* Model code guidelines shown for reference only. Local building authorities (AHJ) and regional amendments maintain final jurisdiction.',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textMuted,
+              height: 1.25,
+            ),
+          ),
         ],
       ),
     );

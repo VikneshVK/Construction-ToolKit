@@ -6,7 +6,7 @@ import 'package:buildcalc/core/components/icons/buildcalc_app_logo.dart';
 void main() {
   testWidgets('BuildCalc SplashScreen Boot & Progress Test', (WidgetTester tester) async {
     // Launch app starting on SplashScreen
-    await tester.pumpWidget(const BuildCalcApp(showSplash: true));
+    await tester.pumpWidget(const BuildCalcApp(showSplash: true, overrideDisclaimerAccepted: true));
 
     // Verify SplashScreen is rendered with title, tagline, and CAD blueprint elements
     expect(find.byType(SplashScreen), findsOneWidget);
@@ -26,7 +26,7 @@ void main() {
 
   testWidgets('BuildCalc App Launch & Navigation Test', (WidgetTester tester) async {
     // Build BuildCalc app and trigger a frame.
-    await tester.pumpWidget(const BuildCalcApp(showSplash: false));
+    await tester.pumpWidget(const BuildCalcApp(showSplash: false, overrideDisclaimerAccepted: true));
     await tester.pumpAndSettle();
 
     // Verify BuildCalc branding is present on Home Screen (Logo + Name alone)

@@ -4,16 +4,19 @@ import '../../theme/app_typography.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_radii.dart';
 import '../../theme/unit_settings.dart';
+import '../legal/legal_disclaimer_content.dart';
 
 /// Settings modal dialog allowing live toggling between American Standard and SI Metric systems,
-/// plus a comprehensive Construction & Building Code Glossary.
+/// a comprehensive Construction & Building Code Glossary, and Legal & Disclaimer terms.
 class UnitSettingsDialog extends StatefulWidget {
-  const UnitSettingsDialog({super.key});
+  final int initialTab;
 
-  static Future<void> show(BuildContext context) {
+  const UnitSettingsDialog({super.key, this.initialTab = 0});
+
+  static Future<void> show(BuildContext context, {int initialTab = 0}) {
     return showDialog(
       context: context,
-      builder: (context) => const UnitSettingsDialog(),
+      builder: (context) => UnitSettingsDialog(initialTab: initialTab),
     );
   }
 
@@ -22,7 +25,35 @@ class UnitSettingsDialog extends StatefulWidget {
 }
 
 class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
-  int _activeTab = 0; // 0: Unit System, 1: Trade & Code Glossary
+  late int _activeTab; // 0: Unit System, 1: Trade & Code Glossary, 2: Legal & Disclaimer
+
+  @override
+  void initState() {
+    super.initState();
+    _activeTab = widget.initialTab;
+  }
+
+  String _getTitle() {
+    switch (_activeTab) {
+      case 1:
+        return 'Code & Glossary';
+      case 2:
+        return 'Legal & Disclaimer';
+      default:
+        return 'Unit System Settings';
+    }
+  }
+
+  IconData _getTitleIcon() {
+    switch (_activeTab) {
+      case 1:
+        return Icons.menu_book_rounded;
+      case 2:
+        return Icons.shield_outlined;
+      default:
+        return Icons.tune_rounded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +78,12 @@ class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
                 children: [
                   Expanded(
                     child: Row(
-                      children: const [
-                        Icon(Icons.tune_rounded, color: AppColors.brandGold, size: 24),
-                        SizedBox(width: AppSpacing.sm),
+                      children: [
+                        Icon(_getTitleIcon(), color: AppColors.brandGold, size: 24),
+                        const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
-                            'Unit System Settings',
+                            _getTitle(),
                             style: AppTypography.cardTitle,
                           ),
                         ),
@@ -67,7 +98,7 @@ class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // Sub-tabs: Units vs Glossary
+              // Sub-tabs: Units vs Glossary vs Legal
               Row(
                 children: [
                   Expanded(
@@ -78,13 +109,22 @@ class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
                       onTap: () => setState(() => _activeTab = 0),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: _buildSubTab(
                       label: 'Code & Glossary',
                       icon: Icons.menu_book_rounded,
                       isSelected: _activeTab == 1,
                       onTap: () => setState(() => _activeTab = 1),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: _buildSubTab(
+                      label: 'Legal',
+                      icon: Icons.shield_outlined,
+                      isSelected: _activeTab == 2,
+                      onTap: () => setState(() => _activeTab = 2),
                     ),
                   ),
                 ],
@@ -95,7 +135,9 @@ class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
                 child: SingleChildScrollView(
                   child: _activeTab == 0
                       ? _buildUnitsContent(currentSystem)
-                      : _buildGlossaryContent(),
+                      : _activeTab == 1
+                          ? _buildGlossaryContent()
+                          : const LegalDisclaimerContent(showAcceptedBadge: true),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -130,7 +172,7 @@ class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.brandGold.withValues(alpha: 0.15) : AppColors.bgElevated,
           borderRadius: BorderRadius.circular(8),
@@ -140,14 +182,16 @@ class _UnitSettingsDialogState extends State<UnitSettingsDialog> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isSelected ? AppColors.brandGold : AppColors.textSecondary),
-            const SizedBox(width: 6),
+            Icon(icon, size: 15, color: isSelected ? AppColors.brandGold : AppColors.textSecondary),
+            const SizedBox(width: 5),
             Flexible(
               child: Text(
                 label,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? AppColors.brandGold : AppColors.textPrimary,
                 ),

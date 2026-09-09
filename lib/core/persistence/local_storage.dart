@@ -54,11 +54,13 @@ class SavedCalculation {
 /// Offline-first local calculation history storage service.
 class LocalStorageService {
   static const String _storageKey = 'buildcalc_saved_calculations_v1';
+  static const String _disclaimerKey = 'buildcalc_accepted_disclaimer_v1';
   static final LocalStorageService instance = LocalStorageService._();
   LocalStorageService._();
 
   final List<SavedCalculation> _cachedList = [];
   bool _isInitialized = false;
+  bool _hasAcceptedDisclaimer = false;
   SharedPreferences? _prefs;
 
   Future<void> init() async {
@@ -66,6 +68,7 @@ class LocalStorageService {
     _isInitialized = true;
     try {
       _prefs = await SharedPreferences.getInstance();
+      _hasAcceptedDisclaimer = _prefs?.getBool(_disclaimerKey) ?? false;
       final content = _prefs?.getString(_storageKey);
       if (content != null && content.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(content);
@@ -75,6 +78,15 @@ class LocalStorageService {
     } catch (_) {
       // Fallback to in-memory store
     }
+  }
+
+  bool get hasAcceptedDisclaimer => _hasAcceptedDisclaimer;
+
+  Future<void> setAcceptedDisclaimer(bool accepted) async {
+    _hasAcceptedDisclaimer = accepted;
+    try {
+      await _prefs?.setBool(_disclaimerKey, accepted);
+    } catch (_) {}
   }
 
   Future<void> _persist() async {
@@ -87,6 +99,7 @@ class LocalStorageService {
   @visibleForTesting
   void resetForTesting() {
     _cachedList.clear();
+    _hasAcceptedDisclaimer = false;
     _isInitialized = false;
     _prefs = null;
   }

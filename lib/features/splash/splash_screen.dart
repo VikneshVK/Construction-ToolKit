@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/components/icons/buildcalc_app_logo.dart';
+import '../../core/persistence/local_storage.dart';
+import '../disclaimer/disclaimer_screen.dart';
 import '../../app_shell.dart';
 
 /// Full-screen Startup Splash / Boot Screen for BuildCalc.
@@ -15,11 +17,13 @@ import '../../app_shell.dart';
 class SplashScreen extends StatefulWidget {
   final Duration duration;
   final VoidCallback? onFinished;
+  final bool? overrideDisclaimerAccepted;
 
   const SplashScreen({
     super.key,
     this.duration = const Duration(milliseconds: 1800),
     this.onFinished,
+    this.overrideDisclaimerAccepted,
   });
 
   @override
@@ -48,9 +52,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         if (widget.onFinished != null) {
           widget.onFinished!();
         } else {
+          final hasAccepted = widget.overrideDisclaimerAccepted ??
+              LocalStorageService.instance.hasAcceptedDisclaimer;
+          final Widget target = hasAccepted ? const AppShell() : const DisclaimerScreen();
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const AppShell(),
+              pageBuilder: (context, animation, secondaryAnimation) => target,
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
                 return FadeTransition(opacity: animation, child: child);
               },
